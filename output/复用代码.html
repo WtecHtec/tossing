@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码复用的伪命题</title>
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: 0 },
+                            '100%': { opacity: 1 },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+        
+        .dark ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+        }
+        
+        /* 平滑过渡 */
+        * {
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        /* 卡片悬停效果 */
+        .insight-card {
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+        
+        .insight-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* 内容区块加载动画 */
+        .content-section {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 按钮悬停效果 */
+        .hover-effect {
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        
+        .hover-effect:hover {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen font-sans">
+    <!-- 主题切换按钮 -->
+    <div class="fixed top-4 right-4 z-50">
+        <button id="theme-toggle" class="p-2 rounded-full bg-white dark:bg-gray-800 shadow-md hover-effect">
+            <i class="fas fa-sun text-yellow-500 dark:hidden"></i>
+            <i class="fas fa-moon text-blue-300 hidden dark:block"></i>
+        </button>
+    </div>
+
+    <!-- 顶部导航 -->
+    <header class="sticky top-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm z-40 border-b border-gray-200 dark:border-gray-800">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-primary-700 dark:text-primary-400">代码复用的伪命题</h1>
+            <nav class="hidden md:flex space-x-6">
+                <a href="#section-1" class="text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 font-medium">基本概念</a>
+                <a href="#section-2" class="text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 font-medium">变化与稳定</a>
+                <a href="#section-3" class="text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 font-medium">不确定性</a>
+                <a href="#section-4" class="text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 font-medium">不可复制性</a>
+                <a href="#section-5" class="text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 font-medium">一次性解决方案</a>
+            </nav>
+            <button class="md:hidden text-gray-600 dark:text-gray-300" id="mobile-menu-button">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 animate-fade-in">
+            <div class="container mx-auto px-4 py-3 flex flex-col space-y-3">
+                <a href="#section-1" class="text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 font-medium py-2">基本概念</a>
+                <a href="#section-2" class="text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 font-medium py-2">变化与稳定</a>
+                <a href="#section-3" class="text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 font-medium py-2">不确定性</a>
+                <a href="#section-4" class="text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 font-medium py-2">不可复制性</a>
+                <a href="#section-5" class="text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 font-medium py-2">一次性解决方案</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
+        <!-- 引言 -->
+        <section class="mb-16 content-section">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8 border border-gray-200 dark:border-gray-700">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-primary-700 dark:text-primary-400">代码复用是个伪命题</h2>
+                <p class="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+                    大多数人认为代码复用是一种理所当然的好实践，能减少重复工作，提高效率。然而，真正的实践中，代码复用往往是一种代价高昂的幻觉。
+                </p>
+                <div class="flex justify-center">
+                    <div class="w-24 h-1 bg-primary-500 rounded-full"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第一部分：基本概念 -->
+        <section id="section-1" class="mb-16 content-section scroll-mt-20">
+            <h2 class="text-2xl md:text-3xl font-bold mb-8 text-gray-800 dark:text-gray-200">复用代码比写新代码更难</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-10">
+                <div class="insight-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-200 dark:border-gray-700">
+                    <div class="text-primary-600 dark:text-primary-400 mb-4">
+                        <i class="fas fa-code text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">过度抽象的陷阱</h3>
+                    <p class="text-gray-700 dark:text-gray-300">
+                        代码的复用性意味着它必须足够抽象，以适用于不同场景，而过度抽象又容易导致代码复杂且难以维护。
+                    </p>
+                </div>
+                
+                <div class="insight-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-200 dark:border-gray-700">
+                    <div class="text-primary-600 dark:text-primary-400 mb-4">
+                        <i class="fas fa-puzzle-piece text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">上下文的负担</h3>
+                    <p class="text-gray-700 dark:text-gray-300">
+                        复用代码需要考虑原代码的上下文、依赖、边界条件，往往要花大量时间去理解和适配，比直接写一份更简单的实现更麻烦。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="bg-gray-100 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">代码复用的本质是「依赖」</h3>
+                <p class="text-gray-700 dark:text-gray-300 mb-4">
+                    当你复用一段代码，你就在引入它的历史、局限性和演化路径：
+                </p>
+                <ul class="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
+                    <li>你复用了某个库，就依赖了它的 API 设计、生命周期、潜在 bug，以及它的更新节奏。</li>
+                    <li>你复用了自己或他人写的组件，就要接受它的架构和设计，哪怕它并不完全适合你的需求。</li>
+                    <li>你复用了通用工具函数，可能意味着你要处理它未覆盖的边界情况，甚至要承担别人留下的技术债。</li>
+                </ul>
+                <p class="text-gray-700 dark:text-gray-300 mt-4">
+                    长远来看，「可复用」的代码会比「一次性」代码更容易拖累项目发展，因为它受限于最初的设计，难以适应新的需求。
+                </p>
+            </div>
+        </section>
+
+        <!-- 第二部分：变化与稳定 -->
+        <section id="section-2" class="mb-16 content-section scroll-mt-20">
+            <h2 class="text-2xl md:text-3xl font-bold mb-8 text-gray-800 dark:text-gray-200">代码复用的终极矛盾：稳定 vs 变化</h2>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8 border border-gray-200 dark:border-gray-700 mb-8">
+                <p class="text-gray-700 dark:text-gray-300 mb-6">
+                    我们之所以想要复用代码，是因为希望「写一次，处处可用」，但现实是代码的复用性取决于代码的稳定性，而软件的本质是变化。
+                </p>
+                
+                <div class="flex flex-col md:flex-row gap-6 mb-6">
+                    <div class="flex-1 bg-gray-100 dark:bg-gray-700 p-5 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-2">稳定代码的悖论</h4>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            如果代码足够稳定（几乎不变），它可能适合复用，但它也可能已经被技术演进淘汰。
+                        </p>
+                    </div>
+                    
+                    <div class="flex-1 bg-gray-100 dark:bg-gray-700 p-5 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-2">变化代码的悖论</h4>
+                        <p class="text-gray-700 dark:text-gray-300">
+                                                       如果代码需要经常修改（以适应需求变化），那么复用它只会增加维护成本，甚至阻碍演进。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="bg-primary-50 dark:bg-gray-700 p-5 rounded-lg border-l-4 border-primary-500">
+                    <p class="text-gray-700 dark:text-gray-300 italic">
+                        矛盾点：真正可复用的代码，通常已经不再需要被修改；而需要不断适配和修改的代码，往往最不适合被复用。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8 border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">代码复用的本质是"共性"的幻觉</h3>
+                
+                <p class="text-gray-700 dark:text-gray-300 mb-6">
+                    当我们试图让代码可复用时，我们通常会寻找不同场景中的"共性"，但共性往往只是表象的相似，而非本质的相同：
+                </p>
+                
+                <div class="space-y-4 mb-6">
+                    <div class="flex items-start">
+                        <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你看到两个功能都需要日期格式化，于是你写了一个「通用的日期工具函数」，但很快，你发现不同的业务有不同的时区、格式、语言要求，最终工具函数越改越复杂，甚至变得难以维护。
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你发现 A 和 B 页面都要显示用户信息，于是你提取了一个「通用的用户组件」，但后来 A 需要显示 VIP 图标，B 需要隐藏部分信息，这个组件的「复用性」变成了一种负担。
+                        </p>
+                    </div>
+                </div>
+                
+                <p class="text-gray-700 dark:text-gray-300 font-medium">
+                    表面的相似，并不意味着长期的共性，而代码复用的代价是：你被过去的共性绑架，忽略了未来的变化。
+                </p>
+            </div>
+        </section>
+
+        <!-- 第三部分：不确定性 -->
+        <section id="section-3" class="mb-16 content-section scroll-mt-20">
+            <h2 class="text-2xl md:text-3xl font-bold mb-8 text-gray-800 dark:text-gray-200">代码复用是对「不确定性」的逃避</h2>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-10">
+                <div class="insight-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-200 dark:border-gray-700 col-span-full md:col-span-1">
+                    <div class="text-primary-600 dark:text-primary-400 mb-4">
+                        <i class="fas fa-random text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">混沌中的秩序幻觉</h3>
+                    <p class="text-gray-700 dark:text-gray-300">
+                        人们追求代码复用，不是真的为了减少代码量，而是为了在不确定的世界里创造确定性。
+                    </p>
+                </div>
+                
+                <div class="insight-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-200 dark:border-gray-700 col-span-full md:col-span-2">
+                    <h3 class="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">错误的假设</h3>
+                    <ul class="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
+                        <li>「如果我们复用代码，就能避免重复劳动。」</li>
+                        <li>「如果我们设计出可复用的架构，以后改动就会更轻松。」</li>
+                        <li>「如果我们有一个统一的组件库，就不会有人重复造轮子。」</li>
+                    </ul>
+                    <div class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-900/30">
+                        <p class="text-red-700 dark:text-red-300">
+                            这些想法基于一个错误的假设：未来是可预测的，变化是有限的。
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8 border border-gray-200 dark:border-gray-700 mb-10">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">代码复用的悖论：你写的代码越通用，它越难被复用</h3>
+                
+                <p class="text-gray-700 dark:text-gray-300 mb-6">
+                    人们总是试图写「更通用的代码」，希望它能适用于更多场景，但真正的情况是：代码的通用性和实用性是对立的。
+                </p>
+                
+                <div class="space-y-4 mb-6">
+                    <div class="flex items-start">
+                        <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                            <i class="fas fa-window-maximize"></i>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            一个完全通用的 UI 组件，往往会变成一个庞大的、难以定制的怪物。
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                            <i class="fas fa-code-branch"></i>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            一个足够灵活的 API，最终会成为所有人都需要「hack」的工具，而不是直接可用的解决方案。
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            一个「能做所有事情」的库，往往谁都不愿意用，因为它的学习成本比自己写一个还高。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 p-5 rounded-lg border border-yellow-100 dark:border-yellow-900/30">
+                    <p class="text-yellow-800 dark:text-yellow-300 font-medium text-center">
+                        最好的代码，不是「通用」的，而是<span class="font-bold">「恰好满足某个特定需求的」</span>。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8 border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">代码复用的真正代价：演进的失控</h3>
+                
+                <p class="text-gray-700 dark:text-gray-300 mb-6">
+                    当你复用代码时，你不是在减少工作量，而是在把未来的变化成本集中到一块代码上：
+                </p>
+                
+                <div class="grid md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你以为你减少了代码量，但其实你增加了未来维护的难度。
+                        </p>
+                    </div>
+                    
+                    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你以为你创造了复用性，但其实你创造了「依赖」，依赖带来的锁定成本远高于「复制 + 修改」的成本。
+                        </p>
+                    </div>
+                    
+                    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你以为你让代码变得「抽象」了，但抽象的代价是：任何具体的需求变化，都会反向影响所有依赖者，最终导致整个系统僵化。
+                        </p>
+                    </div>
+                </div>
+                
+                <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-3">最典型的例子是：</h4>
+                <div class="space-y-4">
+                    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                        <h5 class="font-medium text-gray-800 dark:text-gray-200 mb-2">React 组件库</h5>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你试图复用一个「通用的 Button 组件」，但不同的团队有不同的需求（样式、交互、动画、可访问性）。最终，这个「通用组件」被 patch 了一堆 props，变得比任何特定的实现都更难用。
+                        </p>
+                    </div>
+                    
+                    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                        <h5 class="font-medium text-gray-800 dark:text-gray-200 mb-2">微服务架构</h5>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你想让多个团队共享用户系统，于是把用户服务拆成一个独立的微服务。但后来你发现，每个团队对用户信息的需求都不一样，最终你不是在复用，而是在不断「修补」这个公共服务，让它既满足 A 的需求，也适应 B 的变化，最后变成了所有人的负担。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第四部分：不可复制性 -->
+        <section id="section-4" class="mb-16 content-section scroll-mt-20">
+            <h2 class="text-2xl md:text-3xl font-bold mb-8 text-gray-800 dark:text-gray-200">代码复用是对「不可复制性」的误解</h2>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8 border border-gray-200 dark:border-gray-700 mb-10">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">代码的本质：每一行代码都属于它诞生的环境</h3>
+                
+                <p class="text-gray-700 dark:text-gray-300 mb-6">
+                    代码从来都不是独立存在的，它诞生于特定的业务需求、团队文化、技术栈、历史背景，就像生物适应特定的生态环境一样。
+                </p>
+                
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300">
+                                你写的代码，隐含了当时的权衡和妥协。
+                            </p>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300">
+                                你可能为了性能牺牲了可读性，为了快速交付牺牲了扩展性。
+                            </p>
+                        </div>
+                        
+                        <div class="flex items-start">
+                               <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300">
+                                你可能为了性能牺牲了可读性，为了快速交付牺牲了扩展性。
+                            </p>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                                <i class="fas fa-ghost"></i>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300">
+                                这些权衡是无形的，但它们深深嵌入了代码的结构中。
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                                <i class="fas fa-copy"></i>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300">
+                                当你试图复用一段代码时，你是在试图在一个不同的环境里强行适应它。
+                            </p>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                                <i class="fas fa-seedling"></i>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300">
+                                就像把热带雨林的植物搬到沙漠，它可能存活，但它的「最优适应性」已经消失了。
+                            </p>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                                <i class="fas fa-arrows-alt"></i>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300">
+                                代码在新的环境下，不可避免地需要改动，最终变成了不是复用，而是迁移。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-primary-50 dark:bg-gray-700 p-5 rounded-lg border-l-4 border-primary-500 mb-6">
+                    <p class="text-gray-700 dark:text-gray-300 font-medium">
+                        悖论：真正能够无痛复用的代码，往往已经失去了它的原生优势。
+                    </p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你从一个业务系统里提取了「通用的权限管理模块」，但在另一个系统里，它的「通用性」意味着它无法适应新的业务逻辑，最终不得不被大幅改动。
+                        </p>
+                    </div>
+                    
+                    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你复用了一个「通用的 API 封装层」，但新的团队用的技术栈不同，这些封装反而成了负担。
+                        </p>
+                    </div>
+                    
+                    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你复用了一个「前端组件库」，但它的设计理念、交互习惯、状态管理方式，都和你的新项目不兼容，最终你不得不改得面目全非。
+                        </p>
+                    </div>
+                </div>
+                
+                <p class="text-gray-700 dark:text-gray-300 mt-6 font-medium">
+                    代码的价值，不仅仅是代码本身，而是它所适应的上下文。而上下文是不可复用的。
+                </p>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8 border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">代码复用是对「复制 vs 继承」的误解</h3>
+                
+                <p class="text-gray-700 dark:text-gray-300 mb-6">
+                    在自然界，最有效的信息传递方式，不是克隆（Copy），而是进化（Evolve）。
+                </p>
+                
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-gray-100 dark:bg-gray-700 p-5 rounded-lg">
+                        <h4 class="font-medium text-gray-800 dark:text-gray-200 mb-2 flex items-center">
+                            <i class="fas fa-copy text-primary-500 dark:text-primary-400 mr-2"></i>
+                            复制（Copy）
+                        </h4>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            直接拿来用，但环境不同，它未必适配。
+                        </p>
+                    </div>
+                    
+                    <div class="bg-gray-100 dark:bg-gray-700 p-5 rounded-lg">
+                        <h4 class="font-medium text-gray-800 dark:text-gray-200 mb-2 flex items-center">
+                            <i class="fas fa-dna text-primary-500 dark:text-primary-400 mr-2"></i>
+                            继承（Inherit）
+                        </h4>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            继承思想，然后在新环境下调整。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="bg-red-50 dark:bg-red-900/20 p-5 rounded-lg border border-red-100 dark:border-red-900/30 mb-6">
+                    <h4 class="font-medium text-red-800 dark:text-red-300 mb-2">代码复用的最大误区</h4>
+                    <p class="text-red-700 dark:text-red-400">
+                        以为复制代码比重新写更有效率。
+                    </p>
+                </div>
+                
+                <div class="bg-green-50 dark:bg-green-900/20 p-5 rounded-lg border border-green-100 dark:border-green-900/30 mb-6">
+                    <h4 class="font-medium text-green-800 dark:text-green-300 mb-2">真正有价值的代码复用</h4>
+                    <p class="text-green-700 dark:text-green-400">
+                        不是直接用，而是「理解它为什么这么设计，然后重新实现一个适合当前环境的版本」。
+                    </p>
+                    <p class="text-green-700 dark:text-green-400 mt-2">
+                        真正的代码复用，不是「减少代码量」，而是「减少思考成本」。
+                    </p>
+                </div>
+                
+                <p class="text-gray-700 dark:text-gray-300 font-medium">
+                    真正应该复用的，是思维方式，而不是代码本身。
+                </p>
+                <ul class="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300 mt-4">
+                    <li>你不应该复用某个 API 的实现，而应该复用「如何设计一个清晰的 API」的思考方式。</li>
+                    <li>你不应该复用某个组件，而应该复用「如何构建一个可维护的 UI 体系」的理念。</li>
+                    <li>你不应该复用某个工具，而应该复用「如何让代码更容易替换」的架构哲学。</li>
+                </ul>
+                
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-100 dark:border-yellow-900/30 mt-6">
+                    <p class="text-yellow-800 dark:text-yellow-300 text-center">
+                        代码复用的问题是，它让人们关注于「复制」，而忽略了「进化」。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第五部分：一次性解决方案 -->
+        <section id="section-5" class="mb-16 content-section scroll-mt-20">
+            <h2 class="text-2xl md:text-3xl font-bold mb-8 text-gray-800 dark:text-gray-200">代码本质上是一次性解决方案</h2>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8 border border-gray-200 dark:border-gray-700 mb-10">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">代码的本质：所有代码都是「一次性的」</h3>
+                
+                <p class="text-gray-700 dark:text-gray-300 mb-6">
+                    我们普遍认为代码是可以被「复用」的，就像是工厂生产的零件，能被不同的机器重复使用。但代码和物理世界的组件不同，它更像是一种「即兴演奏」，只能在特定的时空环境下奏响。
+                </p>
+                
+                <div class="bg-gray-100 dark:bg-gray-700 p-5 rounded-lg mb-6">
+                    <h4 class="font-medium text-gray-800 dark:text-gray-200 mb-3">为什么？因为代码是对问题的映射，而问题本身从来都不会一模一样。</h4>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                                <i class="fas fa-file-code"></i>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300">
+                                <span class="font-medium">代码是问题的「临时表达」。</span><br>
+                                代码只是在特定时间、特定需求、特定团队背景下，对某个问题的一次性表达。它并不具备普适性。
+                            </p>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300">
+                                <span class="font-medium">需求在变，环境在变，代码本身的意义也在变。</span><br>
+                                你今天复用的代码，明天可能因为业务逻辑、架构调整、团队文化的变化，完全不再适用。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="text-gray-700 dark:text-gray-300 font-medium text-center">
+                    所以，代码的宿命从来不是「复用」，而是「过期」。
+                </p>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8 border border-gray-200 dark:border-gray-700 mb-10">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">复用的悖论：真正被「复用」的代码，往往已经失去了灵魂</h3>
+                
+                <p class="text-gray-700 dark:text-gray-300 mb-6">
+                    我们经常试图写「可复用的代码」，但真正的问题是：
+                </p>
+                
+                <div class="grid md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-gray-100 dark:bg-gray-700 p-5 rounded-lg">
+                        <div class="text-primary-500 dark:text-primary-400 mb-3 text-center">
+                            <i class="fas fa-compress-arrows-alt text-2xl"></i>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300 text-center">
+                            代码越通用，表达力就越弱。
+                        </p>
+                    </div>
+                    
+                    <div class="bg-gray-100 dark:bg-gray-700 p-5 rounded-lg">
+                        <div class="text-primary-500 dark:text-primary-400 mb-3 text-center">
+                            <i class="fas fa-cloud text-2xl"></i>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300 text-center">
+                            代码越抽象，可维护性就越差。
+                        </p>
+                    </div>
+                    
+                    <div class="bg-gray-100 dark:bg-gray-700 p-5 rounded-lg">
+                                              <div class="text-primary-500 dark:text-primary-400 mb-3 text-center">
+                            <i class="fas fa-hourglass-half text-2xl"></i>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300 text-center">
+                            真正有价值的代码，只适用于它诞生的那一刻。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                            <i class="fas fa-universal-access"></i>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            一个真正适用于所有场景的函数，往往无法精准描述任何一个具体场景。
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你为了让它更灵活，增加了一堆参数，结果它变得无比复杂，适用性反而下降。
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你以为你在构建一个「万能框架」，但实际上，你只是在创造一个「永远适配不了所有需求的桎梏」。
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            你以为你写了一段可以「长期复用」的代码，但现实是，它只在你当前的项目里有意义。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="bg-primary-50 dark:bg-gray-700 p-5 rounded-lg border-l-4 border-primary-500 mt-6">
+                    <p class="text-gray-700 dark:text-gray-300 italic">
+                        真正被复用的代码，往往已经被「削弱」到只剩下最通用的部分，丢失了它最初的价值。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8 border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">代码复用的终极悖论：你在逃避什么？</h3>
+                
+                <p class="text-gray-700 dark:text-gray-300 mb-6">
+                    所有代码复用的尝试，最终都指向一个深层次的心理动机：人们害怕面对变化。
+                </p>
+                
+                <div class="bg-gray-100 dark:bg-gray-700 p-5 rounded-lg mb-6">
+                    <ul class="space-y-3 text-gray-700 dark:text-gray-300">
+                        <li class="flex items-start">
+                            <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                                <i class="fas fa-quote-left"></i>
+                            </div>
+                            <p>「我们应该写出可复用的代码，这样以后就不用改了。」</p>
+                        </li>
+                        
+                        <li class="flex items-start">
+                            <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                                <i class="fas fa-quote-left"></i>
+                            </div>
+                            <p>「我们应该用一套通用架构，这样以后就不会出问题。」</p>
+                        </li>
+                        
+                        <li class="flex items-start">
+                            <div class="text-primary-500 dark:text-primary-400 mr-3 mt-1">
+                                <i class="fas fa-quote-left"></i>
+                            </div>
+                            <p>「我们应该设计一个完美的 API，这样所有人都能用它。」</p>
+                        </li>
+                    </ul>
+                </div>
+                
+                <p class="text-gray-700 dark:text-gray-300 mb-6">
+                    但所有这些想法的背后，是对「变化」的恐惧。
+                </p>
+                
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 p-5 rounded-lg border border-yellow-100 dark:border-yellow-900/30 mb-6">
+                    <p class="text-yellow-800 dark:text-yellow-300 font-medium">
+                        代码复用的终极悖论是：复用不是为了减少工作量，而是为了减少对未来变化的焦虑。
+                    </p>
+                </div>
+                
+                <div class="bg-red-50 dark:bg-red-900/20 p-5 rounded-lg border border-red-100 dark:border-red-900/30">
+                    <p class="text-red-700 dark:text-red-400">
+                        但真正的问题是：软件开发的本质就是变化，所有代码迟早都会被推翻。
+                    </p>
+                    <p class="text-red-700 dark:text-red-400 mt-2">
+                        你以为你写的代码可以长期复用，但现实是，你只是延后了它的死亡时间。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 结论部分 -->
+        <section class="mb-16 content-section">
+            <div class="bg-primary-600 dark:bg-primary-800 rounded-xl shadow-lg p-6 md:p-8 text-white">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-white">终极结论</h2>
+                
+                <div class="space-y-6">
+                    <div class="bg-white/10 p-5 rounded-lg">
+                        <p class="text-white font-medium">
+                            代码复用是个伪命题，真正的问题是：如何让代码更容易被替换？
+                        </p>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-white/10 p-5 rounded-lg">
+                            <h3 class="text-xl font-semibold mb-3 text-white">最好的代码是什么样的？</h3>
+                            <ul class="space-y-2 text-white">
+                                <li class="flex items-start">
+                                    <div class="text-primary-300 mr-3 mt-1">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <p>短命但高效</p>
+                                </li>
+                                <li class="flex items-start">
+                                    <div class="text-primary-300 mr-3 mt-1">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <p>容易被替换，而不是容易被复用</p>
+                                </li>
+                                <li class="flex items-start">
+                                    <div class="text-primary-300 mr-3 mt-1">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <p>复用的不是代码，而是思维方式</p>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-white/10 p-5 rounded-lg">
+                            <h3 class="text-xl font-semibold mb-3 text-white">真正值得复用的是什么？</h3>
+                            <ul class="space-y-2 text-white">
+                                <li class="flex items-start">
+                                    <div class="text-primary-300 mr-3 mt-1">
+                                        <i class="fas fa-lightbulb"></i>
+                                    </div>
+                                    <p>思维模式，而不是代码本身</p>
+                                </li>
+                                <li class="flex items-start">
+                                    <div class="text-primary-300 mr-3 mt-1">
+                                        <i class="fas fa-lightbulb"></i>
+                                    </div>
+                                    <p>架构哲学，而不是具体实现</p>
+                                </li>
+                                <li class="flex items-start">
+                                    <div class="text-primary-300 mr-3 mt-1">
+                                        <i class="fas fa-lightbulb"></i>
+                                    </div>
+                                    <p>解决问题的方法，而不是代码片段</p>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/10 p-5 rounded-lg">
+                        <p class="text-white text-center text-lg font-medium">
+                            代码不是资产，而是负债。<br>
+                            最好的代码，不是可复用的，而是可抛弃的。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-10">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">作者信息</h3>
+                    <p class="text-gray-600 dark:text-gray-400">[作者姓名]</p>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 hover-effect">
+                        <i class="fab fa-github text-2xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 hover-effect">
+                        <i class="fab fa-twitter text-2xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 hover-effect">
+                        <i class="fab fa-linkedin text-2xl"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
+                <p class="text-gray-600 dark:text-gray-400">© 2023 版权所有</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 回到顶部按钮 -->
+    <button id="back-to-top" class="fixed bottom-4 right-4 p-3 rounded-full bg-primary-600 text-white shadow-lg opacity-0 transition-opacity duration-300 hover-effect">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- JavaScript -->
+    <script>
+        // 主题切换
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        // 检查系统偏好
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            html.classList.add('dark');
+        }
+        
+        // 检查本地存储
+        if (localStorage.getItem('theme') === 'dark') {
+            html.classList.add('dark');
+        } else if (localStorage.getItem('theme') === 'light') {
+            html.classList.remove('dark');
+        }
+        
+        // 切换主题
+        themeToggle.addEventListener('click', () => {
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+        
+        // 移动端菜单
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // 关闭菜单当点击链接
+        const mobileLinks = mobileMenu.querySelectorAll('a');
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+        
+        // 回到顶部按钮
+        const backToTopButton = document.getElementById('back-to-top');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTopButton.style.opacity = '1';
+            } else {
+                backToTopButton.style.opacity = '0';
+            }
+        });
+        
+        backToTopButton.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        
+             // 内容区块加载动画
+        const contentSections = document.querySelectorAll('.content-section');
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fade-in');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+        
+        contentSections.forEach(section => {
+            observer.observe(section);
+        });
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
