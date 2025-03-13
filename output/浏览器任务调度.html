@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React 任务调度原理与浏览器调度API</title>
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer components {
+            .card {
+                @apply bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 p-6 mb-6;
+            }
+            .section-title {
+                @apply text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-4;
+            }
+            .subsection-title {
+                @apply text-xl md:text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-3 mt-6;
+            }
+            .paragraph {
+                @apply text-gray-600 dark:text-gray-300 mb-4 leading-relaxed;
+            }
+            .list-item {
+                @apply flex items-start mb-2;
+            }
+            .list-marker {
+                @apply text-primary-500 mr-2 mt-1 flex-shrink-0;
+            }
+            .code-block {
+                @apply bg-gray-100 dark:bg-gray-900 p-4 rounded-lg font-mono text-sm overflow-x-auto mb-4;
+            }
+            .tag {
+                @apply inline-block bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200 px-2 py-1 rounded text-sm mr-2 mb-2;
+            }
+            .table-container {
+                @apply overflow-x-auto mb-6;
+            }
+            .comparison-table {
+                @apply min-w-full border-collapse;
+            }
+            .comparison-table th {
+                @apply bg-gray-100 dark:bg-gray-700 text-left p-3 font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600;
+            }
+            .comparison-table td {
+                @apply p-3 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300;
+            }
+            .btn {
+                @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105;
+            }
+            .btn-primary {
+                @apply bg-primary-500 text-white hover:bg-primary-600;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-200">
+    <!-- 导航栏 -->
+    <nav class="sticky top-0 z-50 bg-white dark:bg-gray-800 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-tasks text-primary-500 text-2xl mr-2"></i>
+                    <span class="font-bold text-xl">React 任务调度</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:block"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 目录导航 -->
+    <div class="bg-gray-100 dark:bg-gray-800 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap gap-2">
+                <a href="#intro" class="tag hover:bg-primary-200 dark:hover:bg-primary-800">引言</a>
+                <a href="#react-render" class="tag hover:bg-primary-200 dark:hover:bg-primary-800">渲染流程</a>
+                <a href="#core-concepts" class="tag hover:bg-primary-200 dark:hover:bg-primary-800">核心概念</a>
+                <a href="#execution-flow" class="tag hover:bg-primary-200 dark:hover:bg-primary-800">执行流程</a>
+                <a href="#concurrent-mode" class="tag hover:bg-primary-200 dark:hover:bg-primary-800">并发模式</a>
+                <a href="#optimization" class="tag hover:bg-primary-200 dark:hover:bg-primary-800">优化策略</a>
+                <a href="#api-comparison" class="tag hover:bg-primary-200 dark:hover:bg-primary-800">API对比</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+        <!-- 标题部分 -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">React 的任务调度原理</h1>
+            <p class="text-xl text-gray-600 dark:text-gray-400">深入理解 Concurrent Mode 与浏览器任务调度</p>
+        </div>
+
+        <!-- 引言部分 -->
+        <section id="intro" class="card">
+            <h2 class="section-title">引言</h2>
+            <p class="paragraph">
+                React 的核心目标之一是提供<span class="font-semibold text-primary-600 dark:text-primary-400">高性能、流畅的 UI 体验</span>，而任务调度（Task Scheduling）是其中的关键部分。React 通过协调（Reconciliation）和并发模式（Concurrent Mode），利用时间切片（Time-Slicing）和优先级调度（Priority Scheduling）来高效地更新 UI，避免掉帧（Frame Drop）和卡顿。
+            </p>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="tag">Reconciliation</span>
+                <span class="tag">Concurrent Mode</span>
+                <span class="tag">Time-Slicing</span>
+                <span class="tag">Priority Scheduling</span>
+            </div>
+        </section>
+
+        <!-- 渲染流程部分 -->
+        <section id="react-render" class="card">
+            <h2 class="section-title">React 渲染的基本流程</h2>
+            <p class="paragraph">在 React 中，渲染流程大致分为以下几个阶段：</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-blue-500 hover:shadow-md transition-all">
+                    <div class="flex items-center mb-2">
+                        <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-2">
+                            <span class="text-blue-600 dark:text-blue-300 font-bold">1</span>
+                        </div>
+                        <h3 class="font-semibold">调度（Scheduling）</h3>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">确定本次渲染任务的优先级，交给调度器（Scheduler）。</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-green-500 hover:shadow-md transition-all">
+                    <div class="flex items-center mb-2">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-2">
+                            <span class="text-green-600 dark:text-green-300 font-bold">2</span>
+                        </div>
+                        <h3 class="font-semibold">协调（Reconciliation）</h3>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">计算 UI 变更，生成 Fiber 树。</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-purple-500 hover:shadow-md transition-all">
+                    <div class="flex items-center mb-2">
+                        <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mr-2">
+                            <span class="text-purple-600 dark:text-purple-300 font-bold">3</span>
+                        </div>
+                        <h3 class="font-semibold">提交（Commit）</h3>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">将变更应用到真实 DOM（或 Native 视图）。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 核心概念部分 -->
+        <section id="core-concepts" class="card">
+            <h2 class="section-title">任务调度的核心概念</h2>
+            <p class="paragraph">React 使用并发模式（Concurrent Mode）来进行任务调度。以下是几个核心概念：</p>
+            
+            <h3 class="subsection-title">Fiber 架构</h3>
+            <p class="paragraph">
+                React 在 v16 之后引入了 Fiber 架构，使得任务可以被中断、恢复和重新调度。每个 UI 组件都会对应一个 Fiber 节点，用于存储任务状态。
+            </p>
+            
+            <h3 class="subsection-title">Scheduler（调度器）</h3>
+            <p class="paragraph">
+                React 自带一个调度器（Scheduler），基于 requestIdleCallback（早期版本）和 MessageChannel（更高效）实现任务管理。它会：
+            </p>
+            <ul class="mb-4">
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-check-circle"></i></span>
+                    <span>拆分任务，防止阻塞主线程（避免掉帧）。</span>
+                </li>
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-check-circle"></i></span>
+                    <span>分配优先级，保证高优任务优先执行（如用户输入）。</span>
+                </li>
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-check-circle"></i></span>
+                    <span>在浏览器空闲时执行任务，提升流畅度。</span>
+                </li>
+            </ul>
+            
+            <h3 class="subsection-title">Time-Slicing（时间切片）</h3>
+            <p class="paragraph">
+                传统的 JavaScript 执行是同步、阻塞的，而 React 采用时间切片（Time-Slicing）方式执行任务：
+            </p>
+            <ul class="mb-4">
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-clock"></i></span>
+                    <span>每帧（Frame）约 16.67ms（60FPS）。</span>
+                </li>
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-pause-circle"></i></span>
+                    <span>React 会在任务执行超时或浏览器需要处理更高优先级任务时中断渲染，然后在下一帧继续执行。</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- 执行流程部分 -->
+        <section id="execution-flow" class="card">
+            <h2 class="section-title">React 任务调度的执行流程</h2>
+            
+            <h3 class="subsection-title">任务的优先级</h3>
+            <p class="paragraph">React 将任务分为不同的优先级（位于 Scheduler 内部）：</p>
+            
+            <div class="table-container">
+                <table class="comparison-table">
+                    <thead>
+                                                <tr>
+                            <th>优先级</th>
+                            <th>描述</th>
+                            <th>示例</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Immediate</td>
+                            <td>最高优先级，必须立即执行</td>
+                            <td>useEffect 清理</td>
+                        </tr>
+                        <tr>
+                            <td>User Blocking</td>
+                            <td>需要尽快执行的任务</td>
+                            <td>输入、按钮点击</td>
+                        </tr>
+                        <tr>
+                            <td>Normal</td>
+                            <td>默认优先级</td>
+                            <td>状态更新</td>
+                        </tr>
+                        <tr>
+                            <td>Low</td>
+                            <td>可以延迟的任务</td>
+                            <td>数据加载</td>
+                        </tr>
+                        <tr>
+                            <td>Idle</td>
+                            <td>最低优先级，浏览器空闲时执行</td>
+                            <td>预加载、日志上报</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <p class="paragraph">React 通过 Scheduler（react-reconciler）管理这些任务，并决定何时执行。</p>
+            
+            <h3 class="subsection-title">任务的执行方式</h3>
+            <p class="paragraph">React 使用 MessageChannel（代替 requestIdleCallback）调度任务：</p>
+            <ol class="mb-4 pl-6 list-decimal">
+                <li class="mb-2">先执行高优任务（如用户交互）。</li>
+                <li class="mb-2">如果任务超时，暂停渲染，等待下一帧继续。</li>
+                <li class="mb-2">任务可中断，确保主线程可以响应事件。</li>
+            </ol>
+            
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-yellow-500">
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                    <span class="font-semibold">示例：</span> 用户输入时，React 会优先更新输入框的 value，而不是低优先级的 UI 渲染。
+                </p>
+            </div>
+        </section>
+
+        <!-- 并发模式部分 -->
+        <section id="concurrent-mode" class="card">
+            <h2 class="section-title">React 并发模式（Concurrent Mode）</h2>
+            <p class="paragraph">并发模式是 React 任务调度的核心，主要特性：</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg hover:shadow-md transition-all">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-pause-circle text-primary-500 mr-2"></i>
+                        <h3 class="font-semibold">可中断渲染</h3>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">长时间任务可以被打断，确保高优任务优先执行。</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg hover:shadow-md transition-all">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-sort-amount-up text-primary-500 mr-2"></i>
+                        <h3 class="font-semibold">优先级调度</h3>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">更高优先级的任务（如输入框输入）不会被低优先级任务（如列表渲染）阻塞。</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg hover:shadow-md transition-all">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-sync-alt text-primary-500 mr-2"></i>
+                        <h3 class="font-semibold">异步渲染</h3>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">不再一次性同步计算整个 Fiber 树，而是按需渲染。</p>
+                </div>
+            </div>
+            
+            <h3 class="subsection-title">示例：使用 useTransition 进行任务调度</h3>
+            <div class="code-block">
+                <pre><code class="language-jsx">import { useState, useTransition } from "react";
+
+function App() {
+  const [text, setText] = useState("");
+  const [list, setList] = useState&lt;string[]&gt;([]);
+  const [isPending, startTransition] = useTransition();
+
+  const handleChange = (e) => {
+    setText(e.target.value);
+    startTransition(() => {
+      setList(Array(20000).fill(e.target.value)); // 大量更新任务
+    });
+  };
+
+  return (
+    &lt;div&gt;
+      &lt;input value={text} onChange={handleChange} /&gt;
+      {isPending && &lt;p&gt;渲染中...&lt;/p&gt;}
+      {list.map((item, index) => (
+        &lt;p key={index}&gt;{item}&lt;/p&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}</code></pre>
+            </div>
+            
+            <ul class="mb-4">
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-bolt"></i></span>
+                    <span><code>setText</code> 立即更新（高优先级）。</span>
+                </li>
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-clock"></i></span>
+                    <span><code>setList</code> 通过 useTransition 延迟处理，避免阻塞输入响应。</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- 优化策略部分 -->
+        <section id="optimization" class="card">
+            <h2 class="section-title">React 任务调度的优化策略</h2>
+            
+            <h3 class="subsection-title">避免同步阻塞</h3>
+            <p class="paragraph">
+                使用 useTransition 或 useDeferredValue，确保高优任务优先执行。
+            </p>
+            
+            <h3 class="subsection-title">使用 startTransition 降低 UI 更新压力</h3>
+            <div class="code-block">
+                <pre><code class="language-jsx">startTransition(() => {
+  setList(data);
+});</code></pre>
+            </div>
+            <ul class="mb-4">
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-check-circle"></i></span>
+                    <span>低优先级任务不会阻塞主线程。</span>
+                </li>
+            </ul>
+            
+            <h3 class="subsection-title">避免重复渲染</h3>
+            <ul class="mb-4">
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-code"></i></span>
+                    <span><code>useMemo / useCallback</code> 避免不必要的重新计算。</span>
+                </li>
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-code"></i></span>
+                    <span><code>React.memo()</code> 避免组件重复渲染。</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- API对比部分 -->
+        <section id="api-comparison" class="card">
+            <h2 class="section-title">requestIdleCallback vs. MessageChannel</h2>
+            <p class="paragraph">浏览器任务调度的两个关键 API，各有优缺点，广泛应用于 React、Vue 等前端框架的调度机制中。</p>
+            
+            <h3 class="subsection-title">什么是 requestIdleCallback？</h3>
+            <p class="paragraph">
+                requestIdleCallback 是浏览器提供的<span class="font-semibold">空闲时间回调 API</span>，用于在浏览器有空闲时间时执行低优先级任务，而不会影响关键渲染任务（如用户交互）。
+            </p>
+            
+            <div class="code-block">
+                <pre><code class="language-javascript">requestIdleCallback((deadline) => {
+  while (deadline.timeRemaining() > 0) {
+    console.log("执行任务");
+  }
+});</code></pre>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                    <h4 class="font-semibold text-green-700 dark:text-green-400 mb-2">✅ 优点</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                            <span>利用浏览器空闲时间，不影响流畅度。</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                            <span>不会影响高优先级任务，适合非关键计算任务（如日志上报、缓存预加载）。</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                            <span>支持超时机制（如 { timeout: 2000 }），确保任务不会无限期延迟。</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                    <h4 class="font-semibold text-red-700 dark:text-red-400 mb-2">❌ 缺点</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-times text-red-500 mr-2 mt-1"></i>
+                            <span>不保证及时执行，如果浏览器一直忙（如滚动、动画），任务可能会被延迟。</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-times text-red-500 mr-2 mt-1"></i>
+                            <span>不适用于高优先级任务，如用户输入处理、动画更新。</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h3 class="subsection-title">什么是 MessageChannel？</h3>
+            <p class="paragraph">
+                MessageChannel 是<span class="font-semibold">微任务队列（Microtask Queue）</span>的一部分，可以用于在主线程内外传递消息并执行任务。相比 requestIdleCallback，它的执行时机更可控，不受浏览器空闲状态影响。
+            </p>
+            
+            <div class="code-block">
+                <pre><code class="language-javascript">const channel = new MessageChannel();
+const port = channel.port1;
+
+port.onmessage = () => {
+  console.log("执行任务");
+};
+
+// 发送消息，触发微任务
+channel.port2.postMessage(null);</code></pre>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                    <h4 class="font-semibold text-green-700 dark:text-green-400 mb-2">✅ 优点</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                            <span>执行时机更快，属于微任务（Microtask），会在下一个事件循环执行。</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                            <span>不受浏览器帧率影响，适用于高优先级任务（如任务调度、React 更新）。</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                            <span>更可控，不会被浏览器的空闲状态限制。</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                    <h4 class="font-semibold text-red-700 dark:text-red-400 mb-2">❌ 缺点</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-times text-red-500 mr-2 mt-1"></i>
+                            <span>可能影响 UI 流畅度，如果执行大量任务，可能导致掉帧。</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-times text-red-500 mr-2 mt-1"></i>
+                                                        <span>不适用于后台任务，因为它不会等待浏览器空闲。</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h3 class="subsection-title">API 对比</h3>
+            <div class="table-container">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>特性</th>
+                            <th>requestIdleCallback</th>
+                            <th>MessageChannel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>执行时机</td>
+                            <td>浏览器空闲时</td>
+                            <td>下一个微任务（Microtask）</td>
+                        </tr>
+                        <tr>
+                            <td>优先级</td>
+                            <td>低优先级</td>
+                            <td>高优先级</td>
+                        </tr>
+                        <tr>
+                            <td>适用场景</td>
+                            <td>后台计算、日志收集、预加载</td>
+                            <td>UI 更新、调度任务</td>
+                        </tr>
+                        <tr>
+                            <td>受浏览器帧率影响</td>
+                            <td>是</td>
+                            <td>否</td>
+                        </tr>
+                        <tr>
+                            <td>React 内部是否使用</td>
+                            <td>否</td>
+                            <td>是（调度任务）</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <h3 class="subsection-title">React 为什么使用 MessageChannel 而不是 requestIdleCallback？</h3>
+            <p class="paragraph">
+                React 需要高效的任务调度机制，所以采用了 MessageChannel 而不是 requestIdleCallback：
+            </p>
+            <ol class="mb-4 pl-6 list-decimal">
+                <li class="mb-2">requestIdleCallback 执行不稳定，如果浏览器繁忙（动画、滚动），任务可能被延迟，影响 React 更新。</li>
+                <li class="mb-2">MessageChannel 执行时机可控，属于微任务，可以确保高优先级任务得到及时执行。</li>
+            </ol>
+            
+            <h3 class="subsection-title">React 内部实现</h3>
+            <div class="code-block">
+                <pre><code class="language-javascript">const channel = new MessageChannel();
+const port = channel.port1;
+
+port.onmessage = () => {
+  workLoop(); // 处理 Fiber 任务
+};
+
+function scheduleWork() {
+  port.postMessage(null); // 触发调度
+}</code></pre>
+            </div>
+            <p class="paragraph">
+                每次有新的 Fiber 任务，React 通过 postMessage(null) 触发 workLoop()，确保任务能在当前事件循环尽快执行。
+            </p>
+            
+            <h3 class="subsection-title">使用场景选择</h3>
+            <div class="table-container">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>场景</th>
+                            <th>适合使用 requestIdleCallback</th>
+                            <th>适合使用 MessageChannel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>后台计算</td>
+                            <td class="text-green-500">✅ 是</td>
+                            <td class="text-red-500">❌ 否</td>
+                        </tr>
+                        <tr>
+                            <td>UI 任务调度</td>
+                            <td class="text-red-500">❌ 否</td>
+                            <td class="text-green-500">✅ 是</td>
+                        </tr>
+                        <tr>
+                            <td>React 调度任务</td>
+                            <td class="text-red-500">❌ 否</td>
+                            <td class="text-green-500">✅ 是</td>
+                        </tr>
+                        <tr>
+                            <td>日志上报</td>
+                            <td class="text-green-500">✅ 是</td>
+                            <td class="text-red-500">❌ 否</td>
+                        </tr>
+                        <tr>
+                            <td>动画 / 用户交互</td>
+                            <td class="text-red-500">❌ 否</td>
+                            <td class="text-green-500">✅ 是</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 结论部分 -->
+        <section class="card">
+            <h2 class="section-title">结论</h2>
+            <p class="paragraph">
+                React 通过 Fiber 架构和 Scheduler 实现高效的任务调度，核心点：
+            </p>
+            <ul class="mb-4">
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-check-circle"></i></span>
+                    <span>时间切片（Time-Slicing）让渲染任务不会卡顿。</span>
+                </li>
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-check-circle"></i></span>
+                    <span>任务优先级调度确保用户体验流畅。</span>
+                </li>
+                <li class="list-item">
+                    <span class="list-marker"><i class="fas fa-check-circle"></i></span>
+                    <span>并发模式让 React 能够更智能地管理任务。</span>
+                </li>
+            </ul>
+            
+            <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                <h4 class="font-semibold text-blue-700 dark:text-blue-400 mb-2">未来展望</h4>
+                <ul class="space-y-2">
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-blue-500 mr-2 mt-1"></i>
+                        <span>React 19 可能会进一步优化任务调度，提升 React Suspense 的能力。</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-blue-500 mr-2 mt-1"></i>
+                        <span>React Server Components 让数据获取和 UI 渲染更加高效。</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-primary-500">
+                <p class="text-center text-gray-700 dark:text-gray-300 italic">
+                    👉 如果你的任务需要尽快执行，选择 MessageChannel；如果是非关键任务，选择 requestIdleCallback。 🚀
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚部分 -->
+    <footer class="bg-gray-100 dark:bg-gray-800 py-8 border-t border-gray-200 dark:border-gray-700 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2">作者信息</h3>
+                    <p class="text-gray-600 dark:text-gray-400">作者姓名: [作者姓名]</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="https://github.com/" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400">
+                        <i class="fab fa-github text-2xl"></i>
+                    </a>
+                    <a href="https://twitter.com/" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400">
+                        <i class="fab fa-twitter text-2xl"></i>
+                    </a>
+                    <a href="https://linkedin.com/" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400">
+                        <i class="fab fa-linkedin text-2xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700 text-center">
+                <p class="text-gray-600 dark:text-gray-400">© 2023 版权所有。保留所有权利。</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // 深色模式切换
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        // 检查系统偏好
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            html.classList.remove('light');
+            html.classList.add('dark');
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+        });
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // 代码高亮
+        document.querySelectorAll('pre code').forEach(block => {
+            block.innerHTML = block.innerHTML
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        });
+        
+        // 添加淡入动画
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fade-in');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        document.querySelectorAll('section').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>
