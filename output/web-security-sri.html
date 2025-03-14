@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web安全之子资源完整性(SRI) - 防止前端代码被篡改的最后防线</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"  crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #5E6AD2;
+            --color-primary-light: #8A94E9;
+            --color-secondary: #E45858;
+            --color-text: #1F2937;
+            --color-text-light: #6B7280;
+            --color-background: #FFFFFF;
+            --color-background-alt: #F9FAFB;
+            --color-border: #E5E7EB;
+            --color-code-bg: #F3F4F6;
+            --color-warning: #FBBF24;
+            --color-danger: #EF4444;
+            --color-success: #10B981;
+        }
+
+        .dark {
+            --color-primary: #818CF8;
+            --color-primary-light: #A5B4FC;
+            --color-secondary: #F87171;
+            --color-text: #F9FAFB;
+            --color-text-light: #D1D5DB;
+            --color-background: #111827;
+            --color-background-alt: #1F2937;
+            --color-border: #374151;
+            --color-code-bg: #1E293B;
+            --color-warning: #F59E0B;
+            --color-danger: #EF4444;
+            --color-success: #10B981;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Serif SC', sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 600;
+        }
+
+        .title-gradient {
+            background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card {
+            background-color: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .code-block {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--color-code-bg);
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            overflow-x: auto;
+            border-left: 4px solid var(--color-primary);
+        }
+
+        .tag {
+            background-color: var(--color-primary-light);
+            color: white;
+            border-radius: 9999px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert {
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-warning {
+            background-color: rgba(251, 191, 36, 0.1);
+            border-color: var(--color-warning);
+        }
+
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: var(--color-danger);
+        }
+
+        .alert-info {
+            background-color: rgba(96, 165, 250, 0.1);
+            border-color: var(--color-primary);
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--color-primary-light);
+        }
+
+        .btn-outline {
+            border: 1px solid var(--color-border);
+            color: var(--color-text);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--color-background-alt);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--color-border);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0.25rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: var(--color-primary);
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        /* 进度条动画 */
+        @keyframes progress {
+            0% { width: 0; }
+            100% { width: 100%; }
+        }
+
+        .progress-bar {
+            height: 4px;
+            background-color: var(--color-primary);
+            animation: progress 2s ease-out;
+        }
+
+        /* 淡入动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0;
+        }
+
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        .delay-400 { animation-delay: 0.4s; }
+        .delay-500 { animation-delay: 0.5s; }
+
+        /* 图表样式 */
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+
+        .chart-bar {
+            position: absolute;
+            bottom: 0;
+            width: 40px;
+            background: linear-gradient(to top, var(--color-primary), var(--color-primary-light));
+            border-radius: 4px 4px 0 0;
+            transition: height 1s ease-out;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .timeline {
+                padding-left: 1.5rem;
+            }
+            
+            .timeline-item::before {
+                left: -1.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <header class="py-6 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-900 z-10">
+        <div class="container mx-auto px-4 md:px-8 flex justify-between items-center">
+            <h1 class="text-2xl md:text-3xl font-bold title-gradient">Web安全之子资源完整性</h1>
+            <div class="flex items-center space-x-4">
+                <button id="theme-toggle" class="btn btn-outline">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                    <span class="ml-2 hidden md:inline">切换主题</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 md:px-8 py-8">
+        <!-- 引言部分 -->
+        <section class="mb-16 fade-in">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-3xl md:text-4xl font-bold mb-6">如何防止前端代码被篡改？</h2>
+                <p class="text-lg md:text-xl text-gray-700 dark:text-gray-300 mb-8">
+                    大多数人认为，只要使用 HTTPS、CSP（内容安全策略）或者做好后端鉴权，就能确保前端的安全。然而，一个容易被忽视的深刻真相是：<span class="font-semibold text-primary">前端的 JavaScript 代码本身可能成为攻击者的入口</span>，而 SRI（子资源完整性）是防止 CDN 或第三方脚本篡改的重要武器。
+                </p>
+                <div class="progress-bar w-full"></div>
+            </div>
+        </section>
+
+        <!-- 真实案例部分 -->
+        <section class="mb-16 fade-in delay-100">
+            <div class="max-w-4xl mx-auto">
+                <div class="card p-6 md:p-8 bg-red-50 dark:bg-red-900/20">
+                    <h3 class="text-2xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
+                        真实案例：前端代码被篡改，导致 15 亿美元损失
+                    </h3>
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">
+                        全球范围内发生了一起严重的供应链攻击——黑客篡改了第三方 CDN 上的 JavaScript 文件，插入了恶意代码，导致成千上万的网站加载了被篡改的脚本，最终黑客通过窃取用户输入的信息获利超 15 亿美元。
+                    </p>
+                    <p class="text-gray-700 dark:text-gray-300 font-semibold">
+                        这类攻击的本质是：你的网站加载了一个第三方资源，但你并不知道它有没有被动过手脚。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SRI 解决方案部分 -->
+        <section class="mb-16 fade-in delay-200">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 flex items-center">
+                    <i class="fas fa-shield-alt text-green-500 mr-3"></i>
+                    解决方案：使用 SRI（子资源完整性）
+                </h2>
+                <p class="text-lg text-gray-700 dark:text-gray-300 mb-6">
+                    SRI（Subresource Integrity）是一种 Web 安全机制，可以确保浏览器加载的外部资源（如 JavaScript 或 CSS）没有被篡改。
+                </p>
+
+                <!-- SRI 工作原理图解 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div class="card p-6">
+                        <h4 class="text-xl font-bold mb-4">SRI 的工作原理</h4>
+                        <div class="space-y-4">
+                                                        <div class="flex items-start mb-3">
+                                <div class="bg-blue-100 dark:bg-blue-900/30 rounded-full p-2 mr-3">
+                                    <i class="fas fa-code text-blue-500"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-semibold">引入外部脚本时</h5>
+                                    <p class="text-gray-600 dark:text-gray-400">使用 integrity 属性指定资源的哈希值</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start mb-3">
+                                <div class="bg-green-100 dark:bg-green-900/30 rounded-full p-2 mr-3">
+                                    <i class="fas fa-check-circle text-green-500"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-semibold">浏览器验证</h5>
+                                    <p class="text-gray-600 dark:text-gray-400">下载资源后计算哈希值并与指定值比对</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="bg-red-100 dark:bg-red-900/30 rounded-full p-2 mr-3">
+                                    <i class="fas fa-times-circle text-red-500"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-semibold">哈希不匹配</h5>
+                                    <p class="text-gray-600 dark:text-gray-400">浏览器拒绝执行该脚本，保护用户安全</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h4 class="text-xl font-bold mb-4">SRI 工作流程图</h4>
+                        <div class="relative h-64 w-full">
+                            <!-- 简化的SRI工作流程图 -->
+                            <div class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
+                                <div class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
+                                    <i class="fas fa-code text-blue-500 text-2xl"></i>
+                                </div>
+                                <div class="w-0.5 h-8 bg-gray-300 dark:bg-gray-600"></div>
+                                <div class="w-16 h-16 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center mb-4">
+                                    <i class="fas fa-calculator text-yellow-500 text-2xl"></i>
+                                </div>
+                                <div class="w-0.5 h-8 bg-gray-300 dark:bg-gray-600"></div>
+                                <div class="flex space-x-8">
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                            <i class="fas fa-check text-green-500 text-2xl"></i>
+                                        </div>
+                                        <p class="text-sm mt-2">哈希匹配</p>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                                            <i class="fas fa-ban text-red-500 text-2xl"></i>
+                                        </div>
+                                        <p class="text-sm mt-2">哈希不匹配</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SRI 代码示例 -->
+                <div class="mb-8">
+                    <h4 class="text-xl font-bold mb-4">SRI 代码示例</h4>
+                    <div class="code-block text-sm">
+                        <pre><code>&lt;script src="https://cdn.example.com/library.js" 
+        integrity="sha384-Base64EncodedHash" 
+        crossorigin="anonymous"&gt;&lt;/script&gt;</code></pre>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                            <h5 class="font-semibold mb-2">integrity 属性</h5>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">包含资源的哈希值（一般使用 SHA-256/384/512）</p>
+                        </div>
+                        <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                            <h5 class="font-semibold mb-2">crossorigin="anonymous"</h5>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">确保请求遵循 CORS 规则，否则 SRI 无效</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 获取 SRI 哈希值 -->
+                <div class="mb-8">
+                    <h4 class="text-xl font-bold mb-4">如何获取 SRI 哈希值？</h4>
+                    <div class="card p-6">
+                        <div class="mb-4">
+                            <h5 class="font-semibold mb-2">使用 OpenSSL 生成哈希值</h5>
+                            <div class="code-block text-sm">
+                                <pre><code>openssl dgst -sha384 -binary library.js | openssl base64 -A</code></pre>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 class="font-semibold mb-2">或使用在线工具</h5>
+                            <a href="https://www.srihash.org/" target="_blank" class="btn btn-primary">
+                                <i class="fas fa-external-link-alt mr-2"></i>
+                                SRI Hash Generator
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 常见误区 -->
+                <div class="alert alert-warning">
+                    <h4 class="text-xl font-bold mb-4">常见误区</h4>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li>SRI 只对外部资源有效，本地托管的 JS/CSS 无需 SRI 保护，但仍需注意代码完整性。</li>
+                        <li>SRI 不能阻止 XSS 攻击，它只能防止静态资源被篡改，而无法防止 DOM 注入攻击。</li>
+                        <li>CDN 资源更新时 SRI 需要重新生成，否则可能导致新版本无法加载。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 深层次问题部分 -->
+        <section class="mb-16 fade-in delay-300">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6">
+                    Web 安全的深刻真相：SRI 只是表象，供应链安全才是根本
+                </h2>
+                <p class="text-lg text-gray-700 dark:text-gray-300 mb-8">
+                    大多数人以为 Web 安全是防止 XSS、CSRF 或者 SQL 注入，但实际上，现代 Web 应用的最大风险不在于攻击用户，而在于攻击开发者和供应链本身。
+                </p>
+
+                <div class="card p-6 mb-8">
+                    <h3 class="text-xl font-bold mb-4">深层次的问题：前端代码已经不在你的控制之内</h3>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <h4 class="font-semibold">你信任 npm，但 npm 上的包是动态更新的</h4>
+                            <p class="text-gray-600 dark:text-gray-400 mt-2">
+                                2021 年 ua-parser-js 事件：维护者的 npm 账户被黑，攻击者发布了一个携带密码窃取恶意代码的新版本，下载量超 800 万。
+                            </p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4 class="font-semibold">你信任 CDN，但 CDN 可能被黑，或者它的供应链被劫持</h4>
+                            <p class="text-gray-600 dark:text-gray-400 mt-2">
+                                2018 年 CDNJS 供应链攻击：黑客提交了一个伪造的 GitHub PR，成功将恶意代码加入官方 CDN，波及数百万网站。
+                            </p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4 class="font-semibold">你信任你的依赖项，但你的依赖项有数百个间接依赖</h4>
+                            <p class="text-gray-600 dark:text-gray-400 mt-2">
+                                event-stream 事件：一个 npm 库的前维护者将权限移交给陌生人，结果新维护者偷偷植入了比特币盗窃代码，影响无数项目。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 供应链安全可视化 -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold mb-4">现代前端供应链的复杂性</h3>
+                    <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
+                        <div class="chart-container" id="dependency-chart">
+                            <!-- 依赖关系图表将通过JS动态生成 -->
+                        </div>
+                        <p class="text-sm text-center text-gray-500 dark:text-gray-400 mt-4">
+                            平均一个前端项目有 1000+ 个间接依赖，每个都是潜在的攻击入口
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 解决方案部分 -->
+        <section class="mb-16 fade-in delay-400">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6">
+                    <i class="fas fa-lock text-green-500 mr-3"></i>
+                    解决方案：如何真正保障供应链安全？
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div class="card p-6 hover:border-blue-500">
+                        <div class="text-blue-500 text-4xl mb-4">
+                            <i class="fas fa-code-branch"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">只信任你能直接控制的代码</h3>
+                        <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>使用 npm ci 而不是 npm install，确保每次安装的依赖是相同的版本</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>在 package.json 里锁定依赖版本，避免被篡改的更新进入你的代码</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>定期使用 npm audit 或 yarn audit 检查依赖的安全性</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card p-6 hover:border-purple-500">
+                        <div class="text-purple-500 text-4xl mb-4">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">监控依赖更新，避免引入恶意版本</h3>
+                        <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>启用 Dependabot 或 Renovate 等工具，监测依赖更新的安全性</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>对于关键依赖（如身份验证、支付库），手动审计版本变更</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>关注开源社区的安全公告，如 CVE、GitHub Security Advisories</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div class="card p-6 hover:border-yellow-500">
+                        <div class="text-yellow-500 text-4xl mb-4">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                                                <h3 class="text-xl font-bold mb-3">防止第三方 CDN 被劫持</h3>
+                        <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>尽量本地托管关键 JS 代码，避免直接加载第三方 CDN</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>如果必须使用 CDN，配合 SRI + CSP，确保代码完整性</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>使用 DNS 监控，检测 CDN 域名是否被劫持</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card p-6 hover:border-red-500">
+                        <div class="text-red-500 text-4xl mb-4">
+                            <i class="fas fa-fingerprint"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">最小化你的攻击面</h3>
+                        <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>精简依赖，不要引入不必要的 npm 包，避免"dependency hell"</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>限制权限，如果某个包不需要访问网络或文件系统，使用 sandbox 运行环境隔离它</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>定期删除不使用的代码，减少潜在的攻击入口</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- SRI 代码示例 -->
+                <div class="mb-8">
+                    <h4 class="text-xl font-bold mb-4">SRI + CSP 组合使用示例</h4>
+                    <div class="code-block text-sm">
+                        <pre><code>&lt;!-- 在 HTML 头部添加 CSP 策略 --&gt;
+&lt;meta http-equiv="Content-Security-Policy" 
+      content="script-src 'self' 'sha384-HashOfInlineScript' https://cdn.example.com"&gt;
+
+&lt;!-- 使用 SRI 加载外部脚本 --&gt;
+&lt;script src="https://cdn.example.com/library.js" 
+        integrity="sha384-Base64EncodedHash" 
+        crossorigin="anonymous"&gt;&lt;/script&gt;</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 终极安全部分 -->
+        <section class="mb-16 fade-in delay-500">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6">
+                    Web 安全的终极真相：你无法真正控制你的代码
+                </h2>
+                
+                <div class="alert alert-danger mb-8">
+                    <h3 class="text-xl font-bold mb-3">终极安全挑战：信任的尽头是幻觉</h3>
+                    <p class="mb-4">Web 安全的本质从来不是代码的安全，而是<strong>"信任"是否合理</strong>。但问题在于：</p>
+                    <div class="bg-white/10 p-4 rounded-lg">
+                        <p class="text-xl font-semibold text-center">信任本身，就是一个漏洞。</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-gray-100 dark:bg-gray-800 p-5 rounded-lg">
+                        <h4 class="font-bold mb-3 flex items-center">
+                            <i class="fas fa-question-circle text-yellow-500 mr-2"></i>
+                            你信任 npm 生态
+                        </h4>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">
+                            但 npm 允许任何人上传更新，你如何保证没有维护者被收买或账号被盗？
+                        </p>
+                    </div>
+                    <div class="bg-gray-100 dark:bg-gray-800 p-5 rounded-lg">
+                        <h4 class="font-bold mb-3 flex items-center">
+                            <i class="fas fa-question-circle text-yellow-500 mr-2"></i>
+                            你信任 CDN
+                        </h4>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">
+                            但 CDN 的托管商可以随时更换资源，你如何知道它没有被暗中替换？
+                        </p>
+                    </div>
+                    <div class="bg-gray-100 dark:bg-gray-800 p-5 rounded-lg">
+                        <h4 class="font-bold mb-3 flex items-center">
+                            <i class="fas fa-question-circle text-yellow-500 mr-2"></i>
+                            你信任 HTTPS
+                        </h4>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">
+                            但你的 CA 证书体系本身就是集中化的，你如何确定你的证书没有被伪造？
+                        </p>
+                    </div>
+                    <div class="bg-gray-100 dark:bg-gray-800 p-5 rounded-lg">
+                        <h4 class="font-bold mb-3 flex items-center">
+                            <i class="fas fa-question-circle text-yellow-500 mr-2"></i>
+                            你信任 GitHub
+                        </h4>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">
+                            但你如何知道某个开源库的 maintainer 不会在 3 年后偷偷插入后门？
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card p-6 mb-8">
+                    <h3 class="text-xl font-bold mb-4">终极解决方案：最小信任原则</h3>
+                    <p class="mb-4">
+                        面对这个无法控制的世界，我们无法消除所有风险，但我们可以做的是：最小化信任链，降低单点风险的破坏性。
+                    </p>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="font-bold flex items-center">
+                                <span class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">
+                                    <span class="text-blue-500">1</span>
+                                </span>
+                                不信任任何外部代码
+                            </h4>
+                            <ul class="pl-11 mt-2 space-y-1 text-gray-600 dark:text-gray-400">
+                                <li>使用 npm pack 下载并手动审计关键依赖，而不是直接 npm install</li>
+                                <li>尽量避免引入不必要的第三方库，比如 lodash 之类的小工具完全可以自己实现</li>
+                                <li>在 CI/CD 中加入静态代码分析，检测代码中的可疑行为</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-bold flex items-center">
+                                <span class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mr-3">
+                                    <span class="text-purple-500">2</span>
+                                </span>
+                                不信任任何外部服务
+                            </h4>
+                            <ul class="pl-11 mt-2 space-y-1 text-gray-600 dark:text-gray-400">
+                                <li>不依赖 CDN 托管关键代码，自己托管核心前端资源</li>
+                                <li>重要的 API 访问，使用 HMAC 或公私钥签名，防止数据传输被劫持</li>
+                                <li>监控 DNS 解析，防止 DNS 劫持攻击</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-bold flex items-center">
+                                <span class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mr-3">
+                                    <span class="text-green-500">3</span>
+                                </span>
+                                不信任运行环境
+                            </h4>
+                            <ul class="pl-11 mt-2 space-y-1 text-gray-600 dark:text-gray-400">
+                                <li>使用 WebAssembly (WASM) 运行敏感逻辑，防止前端代码被篡改</li>
+                                <li>关键业务逻辑放在服务器端，不在前端暴露任何安全关键点</li>
+                                <li>通过 Content Security Policy (CSP) 限制前端脚本执行来源</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-bold flex items-center">
+                                <span class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mr-3">
+                                    <span class="text-red-500">4</span>
+                                </span>
+                                假设自己已经被攻击
+                            </h4>
+                            <ul class="pl-11 mt-2 space-y-1 text-gray-600 dark:text-gray-400">
+                                <li>监控一切可变因素，包括 npm 依赖、CI/CD pipeline、DNS 记录</li>
+                                <li>采用行为分析代替传统的静态代码审计，检测异常行为</li>
+                                <li>定期更换密钥、加密算法，并使用密钥轮换策略，防止长期密钥泄露</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 终极结论 -->
+                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8 rounded-xl">
+                    <h3 class="text-2xl font-bold mb-4">终极结论</h3>
+                    <p class="mb-4">
+                        你以为你在写代码，但真正运行的并不是你的代码；<br>
+                        你以为你在掌控 Web 安全，但真正决定安全的并不是你自己；<br>
+                        你以为你信任的系统是可靠的，但所有信任都可以被利用。
+                    </p>
+                    <p class="text-xl font-bold mb-4">
+                        Web 安全的终极真相是：
+                    </p>
+                    <div class="bg-white/20 p-4 rounded-lg mb-4">
+                        <p class="text-xl font-semibold text-center">
+                            唯一的安全策略，就是不信任任何东西，包括你自己。
+                        </p>
+                    </div>
+                    <p>
+                        在一个一切皆可篡改、一切皆可伪造的世界里，唯一的生存之道就是最小信任，并始终假设攻击已经发生。
+                    </p>
+                    <p class="mt-4 font-bold">
+                        🚀 如果你的 Web 应用没有做好这些准备，那它随时可能成为下一个 15 亿美元的受害者。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 进一步阅读 -->
+        <section class="mb-16 fade-in delay-500">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6">
+                    <i class="fas fa-book text-blue-500 mr-3"></i>
+                    进一步阅读
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="card p-5 hover:scale-105">
+                        <div class="h-40 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 flex items-center justify-center">
+                            <i class="fas fa-shield-alt text-4xl text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                        <h4 class="font-bold mb-2">《Web Application Security》</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">作者: Andrew Hoffman</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            全面介绍现代Web安全威胁和防御策略，包括SRI、CSP等内容安全机制。
+                        </p>
+                    </div>
+                    
+                    <div class="card p-5 hover:scale-105">
+                        <div class="h-40 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 flex items-center justify-center">
+                            <i class="fas fa-code-branch text-4xl text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                        <h4 class="font-bold mb-2">《供应链安全：软件依赖风险管理》</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">作者: Tony Gambacorta</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            深入探讨现代软件供应链安全问题，包括依赖管理、漏洞检测和风险缓解策略。
+                        </p>
+                    </div>
+                    
+                    <div class="card p-5 hover:scale-105">
+                        <div class="h-40 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 flex items-center justify-center">
+                            <i class="fas fa-lock text-4xl text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                        <h4 class="font-bold mb-2">《零信任架构》</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">作者: Jason Garbis & Jerry Chapman</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            介绍零信任安全模型的核心原则和实践，适用于现代分布式应用架构。
+                        </p>
+                    </div>
+                    
+                    <div class="card p-5 hover:scale-105">
+                        <div class="h-40 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 flex items-center justify-center">
+                            <i class="fas fa-bug text-4xl text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                        <h4 class="font-bold mb-2">《黑客攻防：实战Web安全》</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">作者: Dafydd Stuttard & Marcus Pinto</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            全面介绍Web应用安全测试方法，包括前端代码注入、供应链攻击等高级威胁。
+                        </p>
+                    </div>
+                    
+                    <div class="card p-5 hover:scale-105">
+                        <div class="h-40 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 flex items-center justify-center">
+                            <i class="fas fa-fingerprint text-4xl text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                        <h4 class="font-bold mb-2">《OWASP Top 10》</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">作者: OWASP基金会</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            最权威的Web应用安全风险清单，定期更新，包含最新的安全威胁和防御建议。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-100 dark:bg-gray-800 py-12">
+        <div class="container mx-auto px-4 md:px-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+                    <div class="mb-6 md:mb-0">
+                        <h3 class="text-xl font-bold mb-2">关于作者</h3>
+                        <p class="text-gray-600 dark:text-gray-400">
+                            Web安全专家 | 前端架构师 | 技术作家
+                        </p>
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="https://github.com/author" target="_blank" class="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400">
+                            <i class="fab fa-github text-2xl"></i>
+                        </a>
+                        <a href="https://twitter.com/author" target="_blank" class="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400">
+                            <i class="fab fa-twitter text-2xl"></i>
+                        </a>
+                        <a href="https://linkedin.com/in/author" target="_blank" class="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400">
+                            <i class="fab fa-linkedin text-2xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-8 text-center">
+                    <p class="text-gray-600 dark:text-gray-400">
+                        &copy; 2023 Web安全与前端架构。保留所有权利。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 主题切换功能
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        
+        // 检查系统偏好
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            htmlElement.classList.add('dark');
+        }
+        
+        // 主题切换按钮点击事件
+        themeToggle.addEventListener('click', () => {
+            htmlElement.classList.toggle('dark');
+        });
+        
+        // 依赖关系图表
+        document.addEventListener('DOMContentLoaded', function() {
+            const chartContainer = document.getElementById('dependency-chart');
+            if (!chartContainer) return;
+            
+            // 创建依赖关系图表
+            const dependencies = [
+                { name: '直接依赖', count: 15, color: 'var(--color-primary)' },
+                { name: '间接依赖', count: 230, color: 'var(--color-primary-light)' },
+                { name: '深层依赖', count: 850, color: 'var(--color-secondary)' }
+            ];
+            
+            // 计算最大值以确定比例
+            const maxCount = Math.max(...dependencies.map(d => d.count));
+            const containerWidth = chartContainer.clientWidth;
+            const barWidth = Math.min(80, containerWidth / (dependencies.length * 2));
+            const spacing = barWidth / 2;
+            
+            // 创建图表
+            dependencies.forEach((dep, index) => {
+                const barHeight = (dep.count / maxCount) * 250;
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = '0';
+                bar.style.left = `${index * (barWidth + spacing * 2) + spacing}px`;
+                bar.style.width = `${barWidth}px`;
+                bar.style.background = dep.color;
+                
+                const label = document.createElement('div');
+                label.className = 'text-xs text-center absolute -bottom-6 w-20 -ml-4';
+                label.style.left = `${index * (barWidth + spacing * 2) + spacing}px`;
+                label.innerHTML = `${dep.name}<br>${dep.count}`;
+                
+                const value = document.createElement('div');
+                value.className = 'text-xs text-center absolute -top-6 w-20 -ml-4';
+                value.style.left = `${index * (barWidth + spacing * 2) + spacing}px`;
+                value.textContent = dep.count;
+                
+                chartContainer.appendChild(bar);
+                chartContainer.appendChild(label);
+                
+                // 添加动画效果
+                setTimeout(() => {
+                    bar.style.height = `${barHeight}px`;
+                }, 100 * index);
+            });
+        });
+        
+        // 添加滚动动画
+        const fadeElements = document.querySelectorAll('.fade-in');
+        
+        const fadeInOnScroll = () => {
+            fadeElements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const elementBottom = element.getBoundingClientRect().bottom;
+                const isVisible = elementTop < window.innerHeight && elementBottom > 0;
+                
+                if (isVisible) {
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }
+            });
+        };
+        
+        // 初始检查
+        fadeInOnScroll();
+        
+        // 滚动时检查
+        window.addEventListener('scroll', fadeInOnScroll);
+    </script>
+</body>
+</html>
