@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>干中学 - 学习的本质</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #10b981;
+            --accent-color: #8b5cf6;
+            --text-color: #1f2937;
+            --bg-color: #ffffff;
+            --bg-secondary: #f9fafb;
+            --border-color: #e5e7eb;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .dark {
+            --primary-color: #60a5fa;
+            --secondary-color: #34d399;
+            --accent-color: #a78bfa;
+            --text-color: #f3f4f6;
+            --bg-color: #111827;
+            --bg-secondary: #1f2937;
+            --border-color: #374151;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NiIgaGVpZ2h0PSIxMDAiPgo8cmVjdCB3aWR0aD0iNTYiIGhlaWdodD0iMTAwIiBmaWxsPSIjZmZmZmZmMDUiPjwvcmVjdD4KPHBhdGggZD0iTTI4IDY2TDAgNTBMMCAxNkwyOCAwTDU2IDE2TDU2IDUwTDI4IDY2TDI4IDEwMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmMTAiIHN0cm9rZS13aWR0aD0iMiI+PC9wYXRoPgo8cGF0aCBkPSJNMjggMEwyOCAzNEw1NiA1MEw1NiAxNkwyOCAwWiIgZmlsbD0iI2ZmZmZmZjA1IiBzdHJva2U9IiNmZmZmZmYxMCIgc3Ryb2tlLXdpZHRoPSIyIj48L3BhdGg+Cjwvc3ZnPg==');
+            opacity: 0.1;
+        }
+
+        .insight-card {
+            background-color: var(--bg-secondary);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .quote {
+            font-family: 'Noto Serif SC', serif;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            width: 48px;
+            height: 24px;
+            border-radius: 12px;
+            background-color: var(--bg-secondary);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .dark .theme-toggle::after {
+            transform: translateX(24px);
+        }
+
+        .progress-container {
+            height: 5px;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .progress-bar {
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            width: 0%;
+        }
+
+        .concept-diagram {
+            position: relative;
+            height: 300px;
+            margin: 2rem 0;
+        }
+
+        .concept-node {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.5s ease;
+        }
+
+        .concept-node:nth-child(1) {
+            background-color: var(--primary-color);
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .concept-node:nth-child(2) {
+            background-color: var(--secondary-color);
+            top: 150px;
+            left: 20%;
+        }
+
+        .concept-node:nth-child(3) {
+            background-color: var(--accent-color);
+            top: 150px;
+            right: 20%;
+        }
+
+        .concept-line {
+            position: absolute;
+            background-color: var(--border-color);
+            height: 2px;
+            transform-origin: left center;
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .book-card {
+            transition: all 0.3s ease;
+        }
+
+        .book-card:hover {
+            transform: scale(1.03);
+        }
+
+        @media (max-width: 768px) {
+            .concept-diagram {
+                height: 400px;
+            }
+            
+            .concept-node {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .concept-node:nth-child(1) {
+                top: 0;
+            }
+            
+            .concept-node:nth-child(2) {
+                top: 150px;
+                left: 10%;
+            }
+            
+            .concept-node:nth-child(3) {
+                top: 150px;
+                right: 10%;
+            }
+        }
+
+        /* 进度条动画 */
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        .progress-animation {
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--bg-secondary) 0%, var(--primary-color) 50%, var(--accent-color) 100%);
+            background-size: 200% 100%;
+            animation: gradient 2s linear infinite;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 实践步骤卡片 */
+        .step-card {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .step-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary-color), var(--accent-color));
+        }
+
+        .step-card::after {
+            content: "";
+            position: absolute;
+            left: -4px;
+            top: 20px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <header class="hero py-20 px-4 relative">
+        <div class="container mx-auto relative z-10">
+            <div class="flex justify-end mb-4">
+                <div class="theme-toggle" id="themeToggle" title="切换深色/浅色模式"></div>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight">干中学</h1>
+            <p class="text-xl md:text-2xl max-w-3xl opacity-90">深刻真相：学习的最大障碍不是缺乏知识，而是缺乏行动的场景。</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto py-12 px-4">
+        <section class="mb-16">
+            <div class="max-w-3xl mx-auto">
+                <p class="text-lg mb-6 leading-relaxed fade-in">大多数人以为自己学不会某个技能，是因为知识太难，方法不对，或者自己天赋不够。但真正的核心问题是，他们没有让自己进入一个必须动手的环境，没有在真实问题里"卡住"，也就无法体验真正的学习过程。</p>
+                
+                <p class="text-lg mb-6 leading-relaxed fade-in">你可能听说过"刻意练习"，但大多数人误解了它，以为是重复练习某个技能，实际上它的本质是在真实挑战中不断调整。当你在实际项目中遇到难点、尝试解决、失败、调整、再试，学习才真正发生。</p>
+                
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900 dark:from-opacity-20 dark:to-purple-900 dark:to-opacity-20 p-6 rounded-lg my-8 fade-in">
+                    <h3 class="text-xl font-bold mb-4">这也是为什么：</h3>
+                    <ul class="list-disc pl-6 space-y-2">
+                        <li>学外语，最好的方式是逼自己开口交流，而不是死记单词。</li>
+                        <li>学编程，最好的方式是写项目，而不是看教程。</li>
+                        <li>学演讲，最好的方式是上台讲，而不是对着镜子练。</li>
+                    </ul>
+                </div>
+                
+                <p class="text-lg mb-10 leading-relaxed fade-in">知识只是工具，行动才是火种。学得快的人不是因为他们比别人聪明，而是他们敢于走进未知，让自己不断被问题推着往前走。</p>
+            </div>
+        </section>
+
+        <section class="mb-16">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 text-center fade-in">学习的四层真相</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="insight-card p-6 fade-in">
+                        <div class="text-4xl text-primary-color mb-4">
+                            <i class="fas fa-id-card" style="color: var(--primary-color);"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">身份的转变</h3>
+                                                <p class="leading-relaxed">更深刻的真相：真正的学习，不是知识的积累，而是身份的转变。当你真正开始行动，你就已经不是"想学的人"，而是"正在做的人"。</p>
+                    </div>
+                    
+                    <div class="insight-card p-6 fade-in">
+                        <div class="text-4xl text-primary-color mb-4">
+                            <i class="fas fa-leaf-oak" style="color: var(--secondary-color);"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">舍弃而非获取</h3>
+                        <p class="leading-relaxed">最深刻的真相：学习不是获取，而是舍弃。每当你学会一项新技能，真正发生的不是你"得到了"什么，而是你"失去了"某些旧的认知、习惯、甚至身份。</p>
+                    </div>
+                    
+                    <div class="insight-card p-6 fade-in">
+                        <div class="text-4xl text-primary-color mb-4">
+                            <i class="fas fa-sync-alt" style="color: var(--accent-color);"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">旧自我的死亡</h3>
+                        <p class="leading-relaxed">最根本的真相：学习不是"让自己变得更强"，而是"让自己不断死去"。每一次真正的学习，都是一次旧自我的死亡，一次新自我的诞生。</p>
+                    </div>
+                    
+                    <div class="insight-card p-6 fade-in">
+                        <div class="text-4xl text-primary-color mb-4">
+                            <i class="fas fa-bolt" style="color: var(--primary-color);"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">直接成为</h3>
+                        <p class="leading-relaxed">终极真相：你无法"学会"任何东西，你只能成为它。所有学习的本质是"放弃学习，直接成为"。这个世界没有"学会"这种状态，只有"正在做"和"没有做"。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-16">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 text-center fade-in">身份的转变</h2>
+                
+                <div class="quote pl-6 py-2 mb-8 fade-in">
+                    <p class="text-xl italic">大多数人以为"干中学"意味着先做事，再学会，但更本质的是——在做的过程中，你变成了另一个人。</p>
+                </div>
+                
+                <p class="text-lg mb-6 leading-relaxed fade-in">知识可以被记住，技能可以被练习，但这些都只是表象。真正的学习，发生在你对自己的认知改变的那一刻。</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-10">
+                    <div class="step-card p-4 fade-in">
+                        <h4 class="font-bold mb-2">编程者的转变</h4>
+                        <p>当你真正开始写代码，哪怕是写得很烂，你就已经不是"想学编程的人"，而是"在写代码的人"。</p>
+                    </div>
+                    
+                    <div class="step-card p-4 fade-in">
+                        <h4 class="font-bold mb-2">创业者的转变</h4>
+                        <p>当你真正开始创业，哪怕还没有盈利，你就已经不是"研究商业模式的人"，而是"经营一家公司的创业者"。</p>
+                    </div>
+                    
+                    <div class="step-card p-4 fade-in">
+                        <h4 class="font-bold mb-2">健身者的转变</h4>
+                        <p>当你真正开始健身，哪怕只是每天做几个俯卧撑，你就已经不是"想变强壮的人"，而是"每天锻炼的人"。</p>
+                    </div>
+                </div>
+                
+                <p class="text-lg mb-6 leading-relaxed fade-in">学习的本质不是获取信息，而是让自己变成能驾驭这些信息的人。你不再只是"拥有知识"，你成为了那个能用它解决问题的人。</p>
+                
+                <p class="text-lg font-bold text-center my-8 fade-in">所以，干中学的真正奥义，不是学会，而是成为。</p>
+            </div>
+        </section>
+
+        <section class="mb-16">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 text-center fade-in">舍弃而非获取</h2>
+                
+                <div class="quote pl-6 py-2 mb-8 fade-in">
+                    <p class="text-xl italic">大多数人以为"干中学"是不断积累新知识、新技能，但真正的学习，本质上是不断放弃错误的自己。</p>
+                </div>
+                
+                <p class="text-lg mb-6 leading-relaxed fade-in">每当你学会一项新技能，真正发生的不是你"得到了"什么，而是你"失去了"某些旧的认知、习惯、甚至身份——这才是成长的核心。</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-10">
+                    <div class="insight-card p-6 fade-in">
+                        <h4 class="font-bold mb-2">编程的本质</h4>
+                        <p>学会编程，不是你获得了编程能力，而是你失去了"不会把问题拆解成逻辑结构"的思维方式。</p>
+                    </div>
+                    
+                    <div class="insight-card p-6 fade-in">
+                        <h4 class="font-bold mb-2">创业的本质</h4>
+                        <p>学会创业，不是你学到了商业知识，而是你失去了"依赖外部稳定环境"的心理习惯。</p>
+                    </div>
+                    
+                    <div class="insight-card p-6 fade-in">
+                        <h4 class="font-bold mb-2">演讲的本质</h4>
+                        <p>学会演讲，不是你掌握了表达技巧，而是你失去了"害怕在人前说话的自我设限"。</p>
+                    </div>
+                </div>
+                
+                <p class="text-lg mb-6 leading-relaxed fade-in">所有真正的进步，都伴随着某种死亡。你曾经相信的、依赖的、舒适的部分，会在实践中被一点点剥离。你变强，不是因为你"学到了新东西"，而是因为你"不得不放下旧的自己"。</p>
+                
+                <p class="text-lg font-bold text-center my-8 fade-in">所以，干中学的本质不是获取，而是蜕变。</p>
+            </div>
+        </section>
+
+        <section class="mb-16">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 text-center fade-in">旧自我的死亡</h2>
+                
+                <div class="quote pl-6 py-2 mb-8 fade-in">
+                    <p class="text-xl italic">大多数人以为"干中学"是一个成长的过程，但更深层次的本质是：每一次真正的学习，都是一次旧自我的死亡，一次新自我的诞生。</p>
+                </div>
+                
+                <p class="text-lg mb-6 leading-relaxed fade-in">我们总觉得学习是加法，学会新技能、掌握新知识、提升新能力。但真正改变你的，不是你获得了什么，而是你失去了什么——失去无知、失去错误的认知、失去对舒适的依赖、失去那个过时的自己。</p>
+                
+                <p class="text-lg mb-6 leading-relaxed fade-in">每一次卡住、每一次失败、每一次不得不调整的瞬间，都是你旧有思维方式的崩溃。你以为你在努力学会某个技能，其实你是在亲手摧毁那个"不会的人"。</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-10">
+                    <div class="step-card p-4 fade-in">
+                        <p>学会编程，是你杀死了那个只能被动接受技术，而无法创造的人。</p>
+                    </div>
+                    
+                    <div class="step-card p-4 fade-in">
+                        <p>学会独立思考，是你杀死了那个只能盲目相信权威，而无法质疑的人。</p>
+                    </div>
+                    
+                    <div class="step-card p-4 fade-in">
+                        <p>学会面对挑战，是你杀死了那个习惯逃避、害怕失败的自己。</p>
+                    </div>
+                </div>
+                
+                <p class="text-lg font-bold text-center my-8 fade-in">真正的"干中学"，不是变得更聪明，而是让过去的自己一遍遍死去，直到剩下一个真正能面对世界的你。</p>
+            </div>
+        </section>
+
+        <section class="mb-16">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 text-center fade-in">终极真相：直接成为</h2>
+                
+                <div class="quote pl-6 py-2 mb-8 fade-in">
+                    <p class="text-xl italic">所有学习的本质，不是获取，不是蜕变，甚至不是死亡，而是<strong>"放弃学习，直接成为"</strong>。</p>
+                </div>
+                
+                <p class="text-lg mb-6 leading-relaxed fade-in">世界上没有"会编程的人"，只有"在写代码的人"。<br>
+                没有"会创业的人"，只有"在经营的人"。<br>
+                没有"会演讲的人"，只有"在台上说话的人"。</p>
+                
+                <p class="text-lg mb-6 leading-relaxed fade-in">学习只是一个概念，一个等待的姿态，一个以为自己"还差一点就能开始"的幻觉。但真正的掌握，从来不是"学会了再去做"，而是"做了，就已经是"。</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-10">
+                    <div class="insight-card p-6 fade-in">
+                        <p>不是你学会了跑步才去跑，而是当你迈开第一步时，你就已经是个跑者。</p>
+                    </div>
+                    
+                    <div class="insight-card p-6 fade-in">
+                        <p>不是你学会了编程才去写代码，而是当你写出第一行代码时，你就已经是个程序员。</p>
+                    </div>
+                    
+                    <div class="insight-card p-6 fade-in">
+                        <p>不是你准备好了才去创业，而是当你卖出第一件产品时，你就已经是个创业者。</p>
+                    </div>
+                </div>
+                
+                <p class="text-lg mb-6 leading-relaxed fade-in">这个世界没有"学会"这种状态，只有"正在做"和"没有做"。如果你还在等待，认为自己"还不够格"，那你永远不会开始。</p>
+                
+                <p class="text-xl font-bold text-center my-8 fade-in">所以，终极的干中学，不是"边做边学"，而是"直接去做，不再区分自己是在学还是在做"。</p>
+            </div>
+        </section>
+
+        <section class="mb-16">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 text-center fade-in">干中学的实践模型</h2>
+                
+                <div class="concept-diagram fade-in">
+                    <div class="concept-node">行动</div>
+                    <div class="concept-node">反思</div>
+                    <div class="concept-node">调整</div>
+                    <div class="concept-line" id="line1"></div>
+                    <div class="concept-line" id="line2"></div>
+                    <div class="concept-line" id="line3"></div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+                    <div class="step-card p-4 fade-in">
+                        <h4 class="font-bold mb-2">1. 直接行动</h4>
+                        <p>不要等到"准备好"，直接开始做。哪怕只是最小的一步，也比无限期准备更有价值。</p>
+                    </div>
+                    
+                    <div class="step-card p-4 fade-in">
+                                            <h4 class="font-bold mb-2">2. 在卡住时反思</h4>
+                        <p>遇到困难是学习的核心时刻。不要逃避，而是思考：为什么卡住？我缺少什么知识？我的思维方式有什么问题？</p>
+                    </div>
+                    
+                    <div class="step-card p-4 fade-in">
+                        <h4 class="font-bold mb-2">3. 持续调整</h4>
+                        <p>根据反思调整方向，然后继续行动。这个循环会不断加速你的成长，远比线性学习更有效。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-16">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 text-center fade-in">如何开始你的干中学之旅</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="insight-card p-6 fade-in">
+                        <h3 class="text-xl font-bold mb-3">1. 设置必须行动的环境</h3>
+                        <p class="leading-relaxed">找一个让你不得不行动的环境。可以是报名一个课程、加入一个团队、接一个项目，或者公开承诺一个目标。关键是创造一个不行动就会有明显后果的情境。</p>
+                    </div>
+                    
+                    <div class="insight-card p-6 fade-in">
+                        <h3 class="text-xl font-bold mb-3">2. 从最小可行动作开始</h3>
+                        <p class="leading-relaxed">不要试图一步登天。找到最小的、你确定能完成的行动，然后立即执行。比如学编程就写一个简单的"Hello World"，学绘画就画一个简单的形状。</p>
+                    </div>
+                    
+                    <div class="insight-card p-6 fade-in">
+                        <h3 class="text-xl font-bold mb-3">3. 拥抱"卡住"的时刻</h3>
+                        <p class="leading-relaxed">当你遇到困难、感到卡住时，不要立即寻求帮助或放弃。这恰恰是最宝贵的学习时刻。给自己一定时间去思考、尝试和失败，这个过程会重塑你的思维方式。</p>
+                    </div>
+                    
+                    <div class="insight-card p-6 fade-in">
+                        <h3 class="text-xl font-bold mb-3">4. 建立反馈循环</h3>
+                        <p class="leading-relaxed">确保你能获得及时的反馈。可以是来自他人的评价，也可以是自己设定的衡量标准。没有反馈，就无法知道自己是否在正确的方向上前进。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-16">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 text-center fade-in">推荐阅读</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="book-card insight-card p-6 fade-in">
+                        <div class="h-40 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-md flex items-center justify-center text-white mb-4">
+                            <span class="text-xl font-bold">刻意练习</span>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">《刻意练习：如何从新手到大师》</h3>
+                        <p class="text-sm mb-2">作者：安德斯·艾利克森</p>
+                        <p class="text-sm">探讨了如何通过有目的、有计划的练习达到卓越水平，强调了反馈和调整的重要性。</p>
+                    </div>
+                    
+                    <div class="book-card insight-card p-6 fade-in">
+                        <div class="h-40 bg-gradient-to-r from-green-400 to-teal-500 rounded-md flex items-center justify-center text-white mb-4">
+                            <span class="text-xl font-bold">学习之道</span>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">《学习之道》</h3>
+                        <p class="text-sm mb-2">作者：乔希·维茨金</p>
+                        <p class="text-sm">世界象棋冠军分享他的学习方法，强调了实践和自我反思在学习过程中的核心作用。</p>
+                    </div>
+                    
+                    <div class="book-card insight-card p-6 fade-in">
+                        <div class="h-40 bg-gradient-to-r from-purple-400 to-pink-500 rounded-md flex items-center justify-center text-white mb-4">
+                            <span class="text-xl font-bold">原则</span>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">《原则》</h3>
+                        <p class="text-sm mb-2">作者：雷·达里奥</p>
+                        <p class="text-sm">桥水基金创始人分享他的生活和工作原则，强调了从失败中学习和持续改进的重要性。</p>
+                    </div>
+                    
+                    <div class="book-card insight-card p-6 fade-in">
+                        <div class="h-40 bg-gradient-to-r from-red-400 to-orange-500 rounded-md flex items-center justify-center text-white mb-4">
+                            <span class="text-xl font-bold">心流</span>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">《心流：最优体验心理学》</h3>
+                        <p class="text-sm mb-2">作者：米哈里·契克森米哈赖</p>
+                        <p class="text-sm">探讨了人在全神贯注、投入状态下的最佳体验，以及如何在学习和工作中达到这种状态。</p>
+                    </div>
+                    
+                    <div class="book-card insight-card p-6 fade-in">
+                        <div class="h-40 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-md flex items-center justify-center text-white mb-4">
+                            <span class="text-xl font-bold">认知天性</span>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">《认知天性：让学习轻而易举的心理学规律》</h3>
+                        <p class="text-sm mb-2">作者：彼得·布朗等</p>
+                        <p class="text-sm">基于认知科学研究，揭示了有效学习的核心原则，强调了实践、检索和间隔重复的重要性。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-100 dark:bg-gray-800 py-12">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+                    <div class="mb-6 md:mb-0">
+                        <h3 class="text-2xl font-bold mb-2">干中学</h3>
+                        <p class="text-gray-600 dark:text-gray-400">学习的本质是行动与蜕变</p>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        <a href="https://github.com/author" class="text-gray-600 dark:text-gray-400 hover:text-primary-color transition-colors">
+                            <i class="fab fa-github text-2xl"></i>
+                        </a>
+                        <a href="https://twitter.com/author" class="text-gray-600 dark:text-gray-400 hover:text-primary-color transition-colors">
+                            <i class="fab fa-twitter text-2xl"></i>
+                        </a>
+                        <a href="https://linkedin.com/in/author" class="text-gray-600 dark:text-gray-400 hover:text-primary-color transition-colors">
+                            <i class="fab fa-linkedin text-2xl"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-8 text-center">
+                    <p class="text-gray-600 dark:text-gray-400">&copy; 2023 作者名称. 保留所有权利。</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 主题切换
+        const themeToggle = document.getElementById('themeToggle');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        
+        // 初始化主题
+        if (prefersDarkScheme.matches) {
+            document.body.classList.add('dark');
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+        });
+        
+        // 滚动进度条
+        window.onscroll = function() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("progressBar").style.width = scrolled + "%";
+        };
+        
+        // 淡入动画
+        const fadeElements = document.querySelectorAll('.fade-in');
+        
+        const fadeInObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    fadeInObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+        
+        fadeElements.forEach(element => {
+            fadeInObserver.observe(element);
+        });
+        
+        // 概念图连线
+        function drawLines() {
+            const node1 = document.querySelector('.concept-node:nth-child(1)');
+            const node2 = document.querySelector('.concept-node:nth-child(2)');
+            const node3 = document.querySelector('.concept-node:nth-child(3)');
+            
+            const line1 = document.getElementById('line1');
+            const line2 = document.getElementById('line2');
+            const line3 = document.getElementById('line3');
+            
+            if (node1 && node2 && line1) {
+                const x1 = node1.offsetLeft + node1.offsetWidth / 2;
+                const y1 = node1.offsetTop + node1.offsetHeight;
+                const x2 = node2.offsetLeft + node2.offsetWidth / 2;
+                const y2 = node2.offsetTop;
+                
+                const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                
+                line1.style.width = `${length}px`;
+                line1.style.left = `${x1}px`;
+                line1.style.top = `${y1}px`;
+                line1.style.transform = `rotate(${angle}deg)`;
+            }
+            
+            if (node2 && node3 && line2) {
+                const x1 = node2.offsetLeft + node2.offsetWidth;
+                const y1 = node2.offsetTop + node2.offsetHeight / 2;
+                const x2 = node3.offsetLeft;
+                const y2 = node3.offsetTop + node3.offsetHeight / 2;
+                
+                const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                
+                line2.style.width = `${length}px`;
+                line2.style.left = `${x1}px`;
+                line2.style.top = `${y1}px`;
+                line2.style.transform = `rotate(${angle}deg)`;
+            }
+            
+            if (node3 && node1 && line3) {
+                const x1 = node3.offsetLeft + node3.offsetWidth / 2;
+                const y1 = node3.offsetTop;
+                const x2 = node1.offsetLeft + node1.offsetWidth / 2;
+                const y2 = node1.offsetTop + node1.offsetHeight;
+                
+                const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                
+                line3.style.width = `${length}px`;
+                line3.style.left = `${x1}px`;
+                line3.style.top = `${y1}px`;
+                line3.style.transform = `rotate(${angle}deg)`;
+            }
+        }
+        
+        window.addEventListener('load', drawLines);
+        window.addEventListener('resize', drawLines);
+    </script>
+</body>
+</html>
