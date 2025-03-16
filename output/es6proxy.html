@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ES6 Proxy: 重塑 JavaScript 的元编程能力</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        dark: {
+                            100: '#1e293b',
+                            200: '#0f172a',
+                            300: '#020617',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/css">
+        /* 基础样式 */
+        .code-block {
+            position: relative;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .code-block pre {
+            overflow-x: auto;
+            padding: 1.5rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875rem;
+            line-height: 1.7;
+        }
+        
+        .code-block .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .code-block .copy-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        /* 代码高亮 */
+        .token.comment,
+        .token.prolog,
+        .token.doctype,
+        .token.cdata {
+            color: #8292a2;
+        }
+        
+        .token.punctuation {
+            color: #f8f8f2;
+        }
+        
+        .token.namespace {
+            opacity: .7;
+        }
+        
+        .token.property,
+        .token.tag,
+        .token.constant,
+        .token.symbol,
+        .token.deleted {
+            color: #f92672;
+        }
+        
+        .token.boolean,
+        .token.number {
+            color: #ae81ff;
+        }
+        
+        .token.selector,
+        .token.attr-name,
+        .token.string,
+        .token.char,
+        .token.builtin,
+        .token.inserted {
+            color: #a6e22e;
+        }
+        
+        .token.operator,
+        .token.entity,
+        .token.url,
+        .language-css .token.string,
+        .style .token.string,
+        .token.variable {
+            color: #f8f8f2;
+        }
+        
+        .token.atrule,
+        .token.attr-value,
+        .token.function,
+        .token.class-name {
+            color: #e6db74;
+        }
+        
+        .token.keyword {
+            color: #66d9ef;
+        }
+        
+        .token.regex,
+        .token.important {
+            color: #fd971f;
+        }
+        
+        .token.important,
+        .token.bold {
+            font-weight: bold;
+        }
+        
+        .token.italic {
+            font-style: italic;
+        }
+        
+        .token.entity {
+            cursor: help;
+        }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        .dark ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .dark ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* 图表样式 */
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+        
+        /* 卡片悬停效果 */
+        .concept-card {
+            transition: all 0.3s ease;
+        }
+        
+        .concept-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .dark .concept-card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 导航栏激活状态 */
+        .nav-link.active {
+            color: #0ea5e9;
+            border-bottom: 2px solid #0ea5e9;
+        }
+        
+        .dark .nav-link.active {
+            color: #38bdf8;
+            border-bottom: 2px solid #38bdf8;
+        }
+        
+        /* 淡入动画 */
+        .section-animate {
+           
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .section-animate.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-dark-200 dark:text-gray-100 transition-colors duration-300">
+    <!-- 顶部导航栏 -->
+    <header class="sticky top-0 z-50 bg-white/80 dark:bg-dark-100/80 backdrop-blur-md shadow-sm">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <h1 class="text-xl font-bold">ES6 Proxy</h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#concept1" class="nav-link py-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">元编程能力</a>
+                    <a href="#concept2" class="nav-link py-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">对象的本质</a>
+                    <a href="#concept3" class="nav-link py-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Vue 响应式</a>
+                    <a href="#concept4" class="nav-link py-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">微前端隔离</a>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-100 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </button>
+                    <div class="md:hidden">
+                        <button id="mobile-menu-button" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-dark-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-dark-100 shadow-md">
+            <div class="px-4 py-3 space-y-2">
+                <a href="#concept1" class="block py-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">元编程能力</a>
+                <a href="#concept2" class="block py-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">对象的本质</a>
+                <a href="#concept3" class="block py-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Vue 响应式</a>
+                <a href="#concept4" class="block py-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">微前端隔离</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 英雄区域 -->
+    <section class="py-16 md:py-24 bg-gradient-to-br from-primary-50 to-white dark:from-dark-100 dark:to-dark-200">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-4xl mx-auto text-center">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight animate-fade-in">
+                    ES6 Proxy: <span class="text-primary-600 dark:text-primary-400">重塑 JavaScript</span> 的元编程能力
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-10 animate-slide-up">
+                    不仅仅是拦截对象操作，而是让你能够塑造 JavaScript 语言的行为本身
+                </p>
+                <div class="flex flex-wrap justify-center gap-4 animate-slide-up">
+                    <a href="#concept1" class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                        开始探索
+                    </a>
+                    <a href="#examples" class="px-6 py-3 bg-white dark:bg-dark-100 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                        查看代码示例
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 主要内容 -->
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- 概念导航 -->
+        <div class="flex flex-wrap justify-center gap-4 mb-16">
+            <a href="#concept1" class="concept-card bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md flex flex-col items-center text-center w-full sm:w-64">
+                <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">元编程能力</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">解耦 JavaScript 运行时的基本操作和默认实现</p>
+            </a>
+            <a href="#concept2" class="concept-card bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md flex flex-col items-center text-center w-full sm:w-64">
+                <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">对象的本质</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">从静态数据容器到动态计算的视图</p>
+            </a>
+            <a href="#concept3" class="concept-card bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md flex flex-col items-center text-center w-full sm:w-64">
+                <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">Vue 响应式</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">从被动监听到语言级响应式能力</p>
+            </a>
+            <a href="#concept4" class="concept-card bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md flex flex-col items-center text-center w-full sm:w-64">
+                <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">微前端隔离</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">创建 JavaScript 运行时的平行宇宙</p>
+            </a>
+        </div>
+
+        <!-- 概念1：元编程能力 -->
+        <section id="concept1" class="mb-24 section-animate">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 pb-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-primary-600 dark:text-primary-400">01.</span> 元编程能力：解耦 JavaScript 运行时
+                </h2>
+                
+                <div class="prose prose-lg dark:prose-invert max-w-none">
+                    <p class="text-xl mb-6">
+                        一个很多人没有真正意识到的深刻真相是：ES6 的 Proxy 不仅仅是"拦截"对象的操作，而是提供了一种"元编程能力"，允许你塑造 JavaScript 语言的行为本身。
+                    </p>
+                    
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md mb-8">
+                        <h3 class="text-xl font-semibold mb-4">直觉 vs. 真实本质</h3>
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <div class="flex-1 p-4 bg-gray-100 dark:bg-dark-200 rounded-lg">
+                                <h4 class="font-medium mb-2 text-gray-700 dark:text-gray-300">表层理解</h4>
+                                <p class="text-gray-600 dark:text-gray-400">
+                                    大多数人看到 Proxy，会把它当作是"拦截对象操作的钩子"。比如拦截 get 让它返回自定义值，拦截 set 进行校验等。
+                                </p>
+                            </div>
+                            <div class="flex-1 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border-l-4 border-primary-500">
+                                <h4 class="font-medium mb-2 text-primary-700 dark:text-primary-300">真实本质</h4>
+                                <p class="text-gray-700 dark:text-gray-300">
+                                    Proxy 解耦了 JavaScript 运行时的基本操作和它们的默认实现，让你可以改变 JavaScript 语言规则，创建"行为动态"的对象。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-2xl font-semibold mb-4">Proxy 能做什么？</h3>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start">
+                            <span class="inline-flex items-center justify-center w-6 h-6 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full mr-3 mt-1">1</span>
+                            <span>改变 JavaScript 语言规则，比如让对象的键变得大小写不敏感、让 undefined 访问属性不报错而是返回默认值等。</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-flex items-center justify-center w-6 h-6 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full mr-3 mt-1">2</span>
+                            <span>创建"行为动态"的对象，它们的属性和方法不是固定的，而是根据访问方式动态生成。</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-flex items-center justify-center w-6 h-6 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full mr-3 mt-1">3</span>
+                            <span>模拟未来的 JavaScript 语法特性，在浏览器原生支持之前"提前实现"某些功能。</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- 代码示例 -->
+                <div id="examples" class="mt-12 space-y-8">
+                    <h3 class="text-2xl font-semibold mb-6">实例：让 JavaScript 变得"宽容"</h3>
+                    <div class="code-block  dark:bg-gray-900">
+                        <pre><code class="language-javascript">const createCaseInsensitiveObject = (obj) => {
+  return new Proxy(obj, {
+    get(target, prop) {
+      const key = Object.keys(target).find(k => k.toLowerCase() === prop.toLowerCase());
+      return key ? target[key] : undefined;
+    }
+  });
+};
+
+const config = createCaseInsensitiveObject({ ApiKey: "12345" });
+
+console.log(config.apikey); // "12345"
+console.log(config.APIKEY); // "12345"</code></pre>
+                        <button class="copy-button">复制</button>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mt-4">
+                        这里，Proxy 让 JavaScript 的对象变成了大小写不敏感的字典，从而避免了某些由于拼写大小写不一致带来的 bug。
+                    </p>
+                    
+                    <h3 class="text-2xl font-semibold mb-6 mt-12">实例：模拟 Python 式的 defaultdict</h3>
+                    <div class="code-block   dark:bg-gray-900">
+                        <pre><code class="language-javascript">const defaultDict = (defaultValue) => new Proxy({}, {
+  get(target, prop) {
+    if (!(prop in target)) {
+      target[prop] = typeof defaultValue === 'function' ? defaultValue() : defaultValue;
+    }
+    return target[prop];
+  }
+});
+
+const scores = defaultDict(() => []);
+
+scores.alice.push(100);
+scores.bob.push(95);
+
+console.log(scores.alice); // [100]
+console.log(scores.bob);   // [95]
+console.log(scores.eve);   // []</code></pre>
+                        <button class="copy-button">复制</button>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mt-4">
+                        在这里，每次访问一个新的键，Proxy 都会自动创建一个新的默认值。这打破了 JavaScript 传统对象的行为方式，提供了 Python 风格的体验。
+                    </p>
+                </div>
+                
+                <!-- 可视化图表 -->
+                <div class="mt-16">
+                    <h3 class="text-2xl font-semibold mb-6">Proxy 如何改变 JavaScript 行为</h3>
+                                   <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                        <div class="chart-container">
+                            <svg width="100%" height="100%" viewBox="0 0 800 300" class="proxy-chart">
+                                <!-- 传统对象访问 -->
+                                <g class="traditional-path">
+                                    <rect x="50" y="50" width="120" height="60" rx="8" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2" class="dark:fill-primary-900/30 dark:stroke-primary-500" />
+                                    <text x="110" y="85" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">代码</text>
+                                    
+                                    <rect x="340" y="50" width="120" height="60" rx="8" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2" class="dark:fill-primary-900/30 dark:stroke-primary-500" />
+                                    <text x="400" y="85" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">对象</text>
+                                    
+                                    <rect x="630" y="50" width="120" height="60" rx="8" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2" class="dark:fill-primary-900/30 dark:stroke-primary-500" />
+                                    <text x="690" y="85" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">数据</text>
+                                    
+                                    <path d="M170 80 H340" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrowhead)" class="dark:stroke-primary-500" />
+                                    <path d="M460 80 H630" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrowhead)" class="dark:stroke-primary-500" />
+                                    
+                                    <text x="255" y="65" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">直接访问</text>
+                                    <text x="545" y="65" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">返回值</text>
+                                </g>
+                                
+                                <!-- Proxy 对象访问 -->
+                                <g class="proxy-path">
+                                    <rect x="50" y="180" width="120" height="60" rx="8" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2" class="dark:fill-primary-900/30 dark:stroke-primary-500" />
+                                    <text x="110" y="215" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">代码</text>
+                                    
+                                    <rect x="230" y="180" width="120" height="60" rx="8" fill="#bae6fd" stroke="#0284c7" stroke-width="2" class="dark:fill-primary-800/40 dark:stroke-primary-400" />
+                                    <text x="290" y="215" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">Proxy</text>
+                                    
+                                    <rect x="450" y="180" width="120" height="60" rx="8" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2" class="dark:fill-primary-900/30 dark:stroke-primary-500" />
+                                    <text x="510" y="215" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">对象</text>
+                                    
+                                    <rect x="630" y="180" width="120" height="60" rx="8" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2" class="dark:fill-primary-900/30 dark:stroke-primary-500" />
+                                    <text x="690" y="215" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">数据</text>
+                                    
+                                    <path d="M170 210 H230" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrowhead)" class="dark:stroke-primary-500" />
+                                    <path d="M350 210 H450" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrowhead)" class="dark:stroke-primary-500" />
+                                    <path d="M570 210 H630" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrowhead)" class="dark:stroke-primary-500" />
+                                    
+                                    <text x="200" y="195" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">拦截</text>
+                                    <text x="400" y="195" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">自定义行为</text>
+                                    <text x="600" y="195" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">返回值</text>
+                                </g>
+                                
+                                <!-- 箭头标记定义 -->
+                                <defs>
+                                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                        <polygon points="0 0, 10 3.5, 0 7" fill="#0ea5e9" class="dark:fill-primary-500" />
+                                    </marker>
+                                </defs>
+                            </svg>
+                        </div>
+                        <div class="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                            Proxy 在对象访问和操作之间添加了一层自定义行为，解耦了 JavaScript 的基本操作和默认实现
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 概念2：对象的本质 -->
+        <section id="concept2" class="mb-24 section-animate">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 pb-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-primary-600 dark:text-primary-400">02.</span> 对象的本质：从静态容器到动态视图
+                </h2>
+                
+                <div class="prose prose-lg dark:prose-invert max-w-none">
+                    <p class="text-xl mb-6">
+                        Proxy 颠覆了"对象"的概念。大多数人认为 Proxy 只是"拦截器"，但真正深刻的真相是：Proxy 使"对象"不再是静态的数据容器，而是一种"动态计算的视图"。
+                    </p>
+                    
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md mb-8">
+                        <h3 class="text-xl font-semibold mb-4">对象的本质转变</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="p-4 bg-gray-100 dark:bg-dark-200 rounded-lg">
+                                <h4 class="font-medium mb-2 text-gray-700 dark:text-gray-300">传统对象</h4>
+                                <p class="text-gray-600 dark:text-gray-400">
+                                    在传统 JavaScript 里，对象是一个静态的键值存储，预先定义好的数据结构。
+                                </p>
+                                <div class="mt-4 p-3 bg-gray-200 dark:bg-dark-300 rounded text-sm font-mono">
+                                    存在即数据（事先定义数据）
+                                </div>
+                            </div>
+                            <div class="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                                <h4 class="font-medium mb-2 text-primary-700 dark:text-primary-300">Proxy 对象</h4>
+                                <p class="text-gray-700 dark:text-gray-300">
+                                    Proxy 让对象变成一个"计算出来的"结构，而不是预先定义好的数据存储。
+                                </p>
+                                <div class="mt-4 p-3 bg-primary-100 dark:bg-primary-800/30 rounded text-sm font-mono">
+                                    计算即数据（访问时动态生成）
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 代码示例 -->
+                <div class="mt-12">
+                    <h3 class="text-2xl font-semibold mb-6">对象是视图，不是数据</h3>
+                    <div class="code-block   dark:bg-gray-900">
+                        <pre><code class="language-javascript">const dynamicObj = new Proxy({}, {
+  get(target, prop) {
+    return () => `你访问了 ${prop}`;
+  }
+});
+
+console.log(dynamicObj.hello()); // "你访问了 hello"
+console.log(dynamicObj.world()); // "你访问了 world"</code></pre>
+                        <button class="copy-button">复制</button>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mt-4">
+                        这里的 dynamicObj 根本没有 hello 或 world 这两个属性，但 Proxy 让它们在访问时才动态生成。
+                    </p>
+                </div>
+                
+                <!-- 对象本质的转变 -->
+                <div class="mt-12">
+                    <h3 class="text-2xl font-semibold mb-6">这意味着什么？</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                            <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                            </div>
+                            <h4 class="font-semibold mb-2">对象变成计算规则</h4>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                                对象不再只是数据，而是一种计算规则（类似 React 里的 useMemo）。
+                            </p>
+                        </div>
+                        <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                            <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                                </svg>
+                            </div>
+                            <h4 class="font-semibold mb-2">数据变成动态的</h4>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                                数据可以是动态的，而不是静态的键值存储（类似 GraphQL 解析字段）。
+                            </p>
+                        </div>
+                        <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                            <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <h4 class="font-semibold mb-2">对象概念的变革</h4>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                                JavaScript 里的"对象"这个概念，从此变成了一种计算视图，而非固定结构。
+                            </p>
+                        </div>
+                    </div>
+                                </div>
+                
+                <!-- 语言可塑性 -->
+                <div class="mt-16">
+                    <h3 class="text-2xl font-semibold mb-6">Proxy = 语言的"可塑性"</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-8">
+                        JavaScript 一直被认为是动态语言，但 Proxy 让它变得比动态更进一步：它让 JavaScript 的语法本身成为可修改的"接口"。如果你觉得 JavaScript 有缺陷，你可以用 Proxy 让 JavaScript 变成你想要的语言。
+                    </p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-4">自动补全 API</h4>
+                            <div class="code-block   dark:bg-gray-900">
+                                <pre><code class="language-javascript">const safeObj = new Proxy({}, {
+  get(target, prop) {
+    return prop in target ? target[prop] : `未知属性: ${prop}`;
+  }
+});
+
+console.log(safeObj.name);  // "未知属性: name"
+console.log(safeObj.age);   // "未知属性: age"</code></pre>
+                                <button class="copy-button">复制</button>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 mt-4">
+                                这里的 safeObj 消除了 undefined 错误，变成了一种"容错对象"。
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-lg font-semibold mb-4">链式调用不存在的方法</h4>
+                            <div class="code-block   dark:bg-gray-900">
+                                <pre><code class="language-javascript">const chainable = new Proxy(() => {}, {
+  get(target, prop) {
+    return () => {
+      console.log(`调用了 ${prop} 方法`);
+      return chainable; // 继续返回代理，实现链式调用
+    };
+  }
+});
+
+chainable.hello().world().test(); 
+// 输出:
+// "调用了 hello 方法"
+// "调用了 world 方法"
+// "调用了 test 方法"</code></pre>
+                                <button class="copy-button">复制</button>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 mt-4">
+                                在这里，即使 hello、world、test 并不存在，它们依然可以被调用，这是一种类似 jQuery 风格的链式 API。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- DSL 示例 -->
+                <div class="mt-16">
+                    <h3 class="text-2xl font-semibold mb-6">最深刻的真相：Proxy 让 JavaScript 变成"可定制的 DSL"</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-8">
+                        DSL（领域专用语言）是一种针对特定业务需求定制的编程语言。以前，我们要通过 Babel 或 AST 来改造 JavaScript，让它变成 DSL。但 Proxy 让 JavaScript 自身就可以变成 DSL，无需额外的编译器。
+                    </p>
+                    
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                        <h4 class="text-lg font-semibold mb-4">把 JavaScript 变成自然语言</h4>
+                        <div class="code-block   dark:bg-gray-900">
+                            <pre><code class="language-javascript">const naturalLang = new Proxy({}, {
+  get: (target, prop) => (...args) => {
+    return `我${prop}了 ${args.join(", ")}`;
+  }
+});
+
+console.log(naturalLang.吃("苹果", "香蕉")); // 我吃了 苹果, 香蕉
+console.log(naturalLang.跑("公园")); // 我跑了 公园
+console.log(naturalLang.学习("JavaScript")); // 我学习了 JavaScript</code></pre>
+                            <button class="copy-button">复制</button>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 mt-4">
+                            这里，我们用 Proxy 让 JavaScript 变成了"自然语言"风格的 DSL。这在聊天机器人、AI 代码生成等领域有极大的应用空间。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 概念3：Vue 响应式 -->
+        <section id="concept3" class="mb-24 section-animate">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 pb-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-primary-600 dark:text-primary-400">03.</span> Vue 响应式：从属性监听到语言级能力
+                </h2>
+                
+                <div class="prose prose-lg dark:prose-invert max-w-none">
+                    <p class="text-xl mb-6">
+                        很多人只知道 Vue 3 用了 Proxy 替代 Vue 2 的 Object.defineProperty，从而提升了响应式性能和灵活性。但更深刻的真相是：Vue 3 的 Proxy 响应式系统，改变的不只是实现方式，而是 JavaScript 响应式编程的"底层范式"。
+                    </p>
+                    
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md mb-8">
+                        <h3 class="text-xl font-semibold mb-4">Vue 2 vs Vue 3 响应式系统</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-dark-200">
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-gray-300">特性</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-gray-300">Vue 2 (Object.defineProperty)</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-gray-300">Vue 3 (Proxy)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-t border-gray-200 dark:border-gray-700">
+                                        <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">核心方式</td>
+                                        <td class="py-3 px-4 text-gray-600 dark:text-gray-400">劫持属性</td>
+                                        <td class="py-3 px-4 text-primary-600 dark:text-primary-400">劫持整个对象</td>
+                                    </tr>
+                                    <tr class="border-t border-gray-200 dark:border-gray-700">
+                                        <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">能否监听新增/删除属性</td>
+                                        <td class="py-3 px-4 text-gray-600 dark:text-gray-400">不能，必须用 Vue.set()</td>
+                                        <td class="py-3 px-4 text-primary-600 dark:text-primary-400">可以直接监听</td>
+                                    </tr>
+                                    <tr class="border-t border-gray-200 dark:border-gray-700">
+                                        <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">数组支持</td>
+                                        <td class="py-3 px-4 text-gray-600 dark:text-gray-400">需要特殊 hack</td>
+                                        <td class="py-3 px-4 text-primary-600 dark:text-primary-400">原生支持</td>
+                                    </tr>
+                                    <tr class="border-t border-gray-200 dark:border-gray-700">
+                                        <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">性能</td>
+                                        <td class="py-3 px-4 text-gray-600 dark:text-gray-400">深层对象递归劫持，开销大</td>
+                                        <td class="py-3 px-4 text-primary-600 dark:text-primary-400">访问时才代理，懒加载更快</td>
+                                    </tr>
+                                    <tr class="border-t border-gray-200 dark:border-gray-700">
+                                        <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">代码风格</td>
+                                        <td class="py-3 px-4 text-gray-600 dark:text-gray-400">需要 Vue.set() 等 API 辅助</td>
+                                        <td class="py-3 px-4 text-primary-600 dark:text-primary-400">直接使用 JS 语法，无需额外 API</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Vue 2 vs Vue 3 代码对比 -->
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-6">Vue 2：响应式是"被动"的</h3>
+                        <div class="code-block   dark:bg-gray-900">
+                            <pre><code class="language-javascript">let data = { count: 0 };
+
+Object.defineProperty(data, "count", {
+  get() {
+    console.log("获取 count");
+    return value;
+  },
+  set(newValue) {
+    console.log("设置 count:", newValue);
+    value = newValue;
+  },
+});
+
+data.count = 1; // 设置 count: 1
+console.log(data.count); // 获取 count，1</code></pre>
+                            <button class="copy-button">复制</button>
+                        </div>
+                        <div class="mt-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border-l-4 border-red-500">
+                            <h4 class="font-medium mb-2 text-red-700 dark:text-red-300">Vue 2 的缺陷</h4>
+                            <ul class="space-y-2 text-gray-600 dark:text-gray-400 text-sm">
+                                <li class="flex items-start">
+                                    <span class="inline-flex items-center justify-center w-5 h-5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full mr-2 mt-0.5">✕</span>
+                                    <span>无法监听新增/删除的属性</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="inline-flex items-center justify-center w-5 h-5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full mr-2 mt-0.5">✕</span>
+                                    <span>数组是特例，需要手动劫持 push/pop/shift 等方法</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="inline-flex items-center justify-center w-5 h-5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full mr-2 mt-0.5">✕</span>
+                                    <span>只能拦截已有属性，无法动态扩展</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-6">Vue 3：响应式是"主动"的</h3>
+                        <div class="code-block   dark:bg-gray-900">
+                            <pre><code class="language-javascript">let data = new Proxy({ count: 0 }, {
+  get(target, prop) {
+    console.log(`获取 ${prop}`);
+    return target[prop];
+  },
+  set(target, prop, value) {
+    console.log(`设置 ${prop}: ${value}`);
+    target[prop] = value;
+    return true;
+  }
+});
+
+data.count = 1; // 设置 count: 1
+console.log(data.count); // 获取 count，1</code></pre>
+                            <button class="copy-button">复制</button>
+                        </div>
+                        <div class="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border-l-4 border-green-500">
+                            <h4 class="font-medium mb-2 text-green-700 dark:text-green-300">Vue 3 的优势</h4>
+                            <ul class="space-y-2 text-gray-600 dark:text-gray-400 text-sm">
+                                <li class="flex items-start">
+                                    <span class="inline-flex items-center justify-center w-5 h-5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full mr-2 mt-0.5">✓</span>
+                                    <span>可以监听对象的新增/删除属性</span>
+                                </li>
+                                                           <li class="flex items-start">
+                                    <span class="inline-flex items-center justify-center w-5 h-5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full mr-2 mt-0.5">✓</span>
+                                    <span>数组原生支持响应式，无需特殊处理</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="inline-flex items-center justify-center w-5 h-5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full mr-2 mt-0.5">✓</span>
+                                    <span>整体响应，而不是单独属性，更符合直觉</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 响应式编程范式 -->
+                <div class="mt-16">
+                    <h3 class="text-2xl font-semibold mb-6">Proxy 的深刻之处：让 JavaScript 变成"默认响应式"语言</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-8">
+                        Vue 3 通过 Proxy，改变的不仅是 Vue 本身，而是对 JavaScript 语言的增强。这让 JavaScript 从"命令式语言"变成了"声明式语言"。
+                    </p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                            <h4 class="text-lg font-semibold mb-4">命令式编程（传统 JavaScript）</h4>
+                            <div class="code-block   dark:bg-gray-900">
+                                <pre><code class="language-javascript">// 命令式
+let count = 0;
+function increment() {
+  count++;
+  updateUI(); // 手动更新 UI
+}
+
+function updateUI() {
+  document.getElementById('counter').textContent = count;
+}</code></pre>
+                                <button class="copy-button">复制</button>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 mt-4">
+                                传统 JavaScript 需要手动调用更新函数，数据和 UI 是分离的。
+                            </p>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                            <h4 class="text-lg font-semibold mb-4">声明式编程（Vue 3 + Proxy）</h4>
+                            <div class="code-block   dark:bg-gray-900">
+                                <pre><code class="language-javascript">// 声明式
+const state = reactive({ count: 0 });
+
+function increment() {
+  state.count++; // UI 自动更新
+}
+
+// 模板中
+// {{ state.count }}</code></pre>
+                                <button class="copy-button">复制</button>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 mt-4">
+                                Vue 3 中，数据变化自动触发 UI 更新，类似 Excel 公式。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 可视化图表 -->
+                <div class="mt-16">
+                    <h3 class="text-2xl font-semibold mb-6">Vue 2 vs Vue 3 响应式原理</h3>
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                        <div class="chart-container">
+                            <svg width="100%" height="100%" viewBox="0 0 800 300" class="vue-chart">
+                                <!-- Vue 2 响应式 -->
+                                <g class="vue2-path">
+                                    <rect x="50" y="50" width="120" height="60" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="2" class="dark:fill-red-900/30 dark:stroke-red-500" />
+                                    <text x="110" y="85" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">数据对象</text>
+                                    
+                                    <rect x="250" y="50" width="180" height="60" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="2" class="dark:fill-red-900/30 dark:stroke-red-500" />
+                                    <text x="340" y="85" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">Object.defineProperty</text>
+                                    
+                                    <rect x="510" y="50" width="120" height="60" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="2" class="dark:fill-red-900/30 dark:stroke-red-500" />
+                                    <text x="570" y="85" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">响应式数据</text>
+                                    
+                                    <rect x="700" y="50" width="80" height="60" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="2" class="dark:fill-red-900/30 dark:stroke-red-500" />
+                                    <text x="740" y="85" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">UI</text>
+                                    
+                                    <path d="M170 80 H250" stroke="#ef4444" stroke-width="2" marker-end="url(#arrowhead-red)" class="dark:stroke-red-500" />
+                                    <path d="M430 80 H510" stroke="#ef4444" stroke-width="2" marker-end="url(#arrowhead-red)" class="dark:stroke-red-500" />
+                                    <path d="M630 80 H700" stroke="#ef4444" stroke-width="2" marker-end="url(#arrowhead-red)" class="dark:stroke-red-500" />
+                                    
+                                    <text x="210" y="65" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">遍历每个属性</text>
+                                    <text x="470" y="65" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">劫持 getter/setter</text>
+                                    <text x="665" y="65" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">更新</text>
+                                </g>
+                                
+                                <!-- Vue 3 响应式 -->
+                                <g class="vue3-path">
+                                    <rect x="50" y="180" width="120" height="60" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2" class="dark:fill-green-900/30 dark:stroke-green-500" />
+                                    <text x="110" y="215" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">数据对象</text>
+                                    
+                                    <rect x="250" y="180" width="120" height="60" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2" class="dark:fill-green-900/30 dark:stroke-green-500" />
+                                    <text x="310" y="215" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">Proxy</text>
+                                    
+                                    <rect x="450" y="180" width="120" height="60" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2" class="dark:fill-green-900/30 dark:stroke-green-500" />
+                                    <text x="510" y="215" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">响应式数据</text>
+                                    
+                                    <rect x="650" y="180" width="80" height="60" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2" class="dark:fill-green-900/30 dark:stroke-green-500" />
+                                    <text x="690" y="215" text-anchor="middle" class="text-sm font-medium fill-gray-700 dark:fill-gray-300">UI</text>
+                                    
+                                    <path d="M170 210 H250" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowhead-green)" class="dark:stroke-green-500" />
+                                    <path d="M370 210 H450" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowhead-green)" class="dark:stroke-green-500" />
+                                    <path d="M570 210 H650" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowhead-green)" class="dark:stroke-green-500" />
+                                    
+                                    <text x="210" y="195" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">整体代理</text>
+                                    <text x="410" y="195" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">拦截所有操作</text>
+                                    <text x="610" y="195" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">自动更新</text>
+                                </g>
+                                
+                                <!-- 箭头标记定义 -->
+                                <defs>
+                                    <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                        <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444" class="dark:fill-red-500" />
+                                    </marker>
+                                    <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                        <polygon points="0 0, 10 3.5, 0 7" fill="#22c55e" class="dark:fill-green-500" />
+                                    </marker>
+                                </defs>
+                            </svg>
+                        </div>
+                        <div class="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                            Vue 3 的 Proxy 响应式系统让 JavaScript 变成了一种"默认响应式"的语言，数据变化自动触发视图更新
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 未来展望 -->
+                <div class="mt-16">
+                    <h3 class="text-2xl font-semibold mb-6">Proxy 带来的未来</h3>
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">
+                            Vue 3 只是 Proxy 应用的开始，未来 JavaScript 响应式编程会变成一种默认能力：
+                        </p>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full mr-3 mt-1">1</span>
+                                <span class="text-gray-600 dark:text-gray-400">React 可能也会用 Proxy（目前 React 仍然用 useState 之类的 Hook 手动管理状态）</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full mr-3 mt-1">2</span>
+                                <span class="text-gray-600 dark:text-gray-400">前端可以摆脱"setState"模式，直接基于数据流进行开发</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full mr-3 mt-1">3</span>
+                                <span class="text-gray-600 dark:text-gray-400">数据库查询、远程 API 访问、缓存机制都可以基于 Proxy 构建，让一切变成"流动的"</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full mr-3 mt-1">4</span>
+                                <span class="text-gray-600 dark:text-gray-400">Web 应用可以变成"Excel-like"模型，一切都是"自动计算"的，不需要手动调用更新</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 概念4：微前端隔离 -->
+        <section id="concept4" class="mb-24 section-animate">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 pb-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-primary-600 dark:text-primary-400">04.</span> 微前端隔离：JavaScript 运行时的平行宇宙
+                </h2>
+                
+                <div class="prose prose-lg dark:prose-invert max-w-none">
+                                    <p class="text-xl mb-6">
+                        大多数人认为微前端的 JS 隔离是通过 sandbox（沙箱）或者 iframe 来实现的，但更深刻的真相是：Proxy 让 JavaScript 运行时具备了"平行宇宙"能力，让同一页面的多个子应用可以在独立的"时间线"上运行，互不影响。
+                    </p>
+                    
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md mb-8">
+                        <h3 class="text-xl font-semibold mb-4">传统的 JavaScript 作用域问题</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-4">
+                            在单体应用（monolith）中，JavaScript 作用域是共享的：
+                        </p>
+                        <div class="code-block   dark:bg-gray-900">
+                            <pre><code class="language-javascript">window.globalVar = "A";
+
+function changeVar() {
+  window.globalVar = "B";
+}
+
+changeVar();
+console.log(window.globalVar); // B（被污染）</code></pre>
+                            <button class="copy-button">复制</button>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 mt-4">
+                            这在微前端场景下就成了灾难：应用 A 可能会覆盖应用 B 的变量，不同应用的 window、document 等全局对象是共享的，加载多个框架（如 Vue2 和 Vue3）会引发冲突。
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 隔离方案对比 -->
+                <div class="mt-12">
+                    <h3 class="text-2xl font-semibold mb-6">微前端隔离方案对比</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                            <h4 class="text-lg font-semibold mb-4">iframe：物理隔离，但太重</h4>
+                            <div class="code-block   dark:bg-gray-900">
+                                <pre><code class="language-html">&lt;iframe src="appA.html"&gt;&lt;/iframe&gt;
+&lt;iframe src="appB.html"&gt;&lt;/iframe&gt;</code></pre>
+                                <button class="copy-button">复制</button>
+                            </div>
+                            <div class="mt-6">
+                                <h5 class="font-medium mb-2">优点：</h5>
+                                <ul class="space-y-2 text-gray-600 dark:text-gray-400 text-sm">
+                                    <li class="flex items-start">
+                                        <span class="inline-flex items-center justify-center w-5 h-5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full mr-2 mt-0.5">✓</span>
+                                        <span>完全隔离，每个 iframe 内的 window、document、localStorage 都是独立的</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="inline-flex items-center justify-center w-5 h-5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full mr-2 mt-0.5">✓</span>
+                                        <span>不会有任何全局变量污染</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="mt-4">
+                                <h5 class="font-medium mb-2">缺点：</h5>
+                                <ul class="space-y-2 text-gray-600 dark:text-gray-400 text-sm">
+                                    <li class="flex items-start">
+                                        <span class="inline-flex items-center justify-center w-5 h-5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full mr-2 mt-0.5">✕</span>
+                                        <span>通信复杂，跨 iframe 需要 postMessage</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="inline-flex items-center justify-center w-5 h-5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full mr-2 mt-0.5">✕</span>
+                                        <span>性能开销大，每个 iframe 都相当于一个完整的浏览器环境</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="inline-flex items-center justify-center w-5 h-5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full mr-2 mt-0.5">✕</span>
+                                        <span>DOM 隔离过强，CSS、JS 都需要额外处理才能跨 iframe 共享</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                            <h4 class="text-lg font-semibold mb-4">Proxy：让 JS 运行时变成"平行宇宙"</h4>
+                            <div class="code-block   dark:bg-gray-900">
+                                <pre><code class="language-javascript">const rawWindow = window;
+const fakeWindow = {};
+
+const proxyWindow = new Proxy(fakeWindow, {
+  get(target, prop) {
+    return prop in target ? target[prop] : rawWindow[prop];
+  },
+  set(target, prop, value) {
+    target[prop] = value; // 只修改 fakeWindow，不影响全局 window
+    return true;
+  }
+});</code></pre>
+                                <button class="copy-button">复制</button>
+                            </div>
+                            <div class="mt-6">
+                                <h5 class="font-medium mb-2">优点：</h5>
+                                <ul class="space-y-2 text-gray-600 dark:text-gray-400 text-sm">
+                                    <li class="flex items-start">
+                                        <span class="inline-flex items-center justify-center w-5 h-5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full mr-2 mt-0.5">✓</span>
+                                        <span>强大的作用域隔离，每个应用有自己的 window</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="inline-flex items-center justify-center w-5 h-5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full mr-2 mt-0.5">✓</span>
+                                        <span>性能高，轻量级实现</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="inline-flex items-center justify-center w-5 h-5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full mr-2 mt-0.5">✓</span>
+                                        <span>通信简单，可以直接共享 window</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Proxy 实现的微前端 JS 隔离 -->
+                <div class="mt-16">
+                    <h3 class="text-2xl font-semibold mb-6">Proxy 实现的微前端 JS 隔离核心</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-4">让 window 变成"平行版本"</h4>
+                            <div class="code-block   dark:bg-gray-900">
+                                <pre><code class="language-javascript">const proxyWindowA = new Proxy({}, {
+  get(target, prop) { 
+    return prop in target ? target[prop] : window[prop]; 
+  },
+  set(target, prop, value) { 
+    target[prop] = value; 
+    return true; 
+  }
+});
+
+const proxyWindowB = new Proxy({}, {
+  get(target, prop) { 
+    return prop in target ? target[prop] : window[prop]; 
+  },
+  set(target, prop, value) { 
+    target[prop] = value; 
+    return true; 
+  }
+});</code></pre>
+                                <button class="copy-button">复制</button>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 mt-4">
+                                这样 A 和 B 运行时，各自的 window 是独立的，不会互相污染。
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-lg font-semibold mb-4">让 document 也变成"平行版本"</h4>
+                            <div class="code-block   dark:bg-gray-900">
+                                <pre><code class="language-javascript">const rawDocument = document;
+const proxyDocument = new Proxy({}, {
+  get(target, prop) {
+    if (prop === "querySelector") {
+      return (selector) => rawDocument.querySelector(`#appA ${selector}`);
+    }
+    return rawDocument[prop];
+  }
+});</code></pre>
+                                <button class="copy-button">复制</button>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 mt-4">
+                                这样，proxyDocument.querySelector('.btn') 只会在 #appA 作用域下查找，而不会影响整个页面。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 可视化图表 -->
+                <div class="mt-16">
+                    <h3 class="text-2xl font-semibold mb-6">Proxy vs iframe，谁更强？</h3>
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-dark-200">
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-gray-300">特性</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-gray-300">iframe</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-gray-300">Proxy</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-t border-gray-200 dark:border-gray-700">
+                                        <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">作用域隔离</td>
+                                        <td class="py-3 px-4 text-gray-600 dark:text-gray-400">强</td>
+                                        <td class="py-3 px-4 text-primary-600 dark:text-primary-400">强</td>
+                                    </tr>
+                                    <tr class="border-t border-gray-200 dark:border-gray-700">
+                                        <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">性能</td>
+                                        <td class="py-3 px-4 text-gray-600 dark:text-gray-400">低（消耗大）</td>
+                                        <td class="py-3 px-4 text-primary-600 dark:text-primary-400">高（轻量级）</td>
+                                    </tr>
+                                    <tr class="border-t border-gray-200 dark:border-gray-700">
+                                        <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">通信复杂度</td>
+                                        <td class="py-3 px-4 text-gray-600 dark:text-gray-400">高（需要 postMessage）</td>
+                                        <td class="py-3 px-4 text-primary-600 dark:text-primary-400">低（直接共享 window）</td>
+                                    </tr>
+                                    <tr class="border-t border-gray-200 dark:border-gray-700">
+                                        <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">CSS 隔离</td>
+                                        <td class="py-3 px-4 text-gray-600 dark:text-gray-400">强（默认隔离）</td>
+                                        <td class="py-3 px-4 text-primary-600 dark:text-primary-400">弱（需要 shadow DOM）</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                            Proxy 让 JavaScript 本身支持"多重现实"，比 iframe 更轻量，可以让多个微前端应用在同一页面无缝运行
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 未来展望 -->
+                <div class="mt-16">
+                    <h3 class="text-2xl font-semibold mb-6">未来：JavaScript 可能原生支持"多重现实"</h3>
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                                               <p class="text-gray-600 dark:text-gray-400 mb-6">
+                            目前，我们是用 Proxy 模拟了一个"平行 JavaScript 运行环境"，但未来 JavaScript 可能会原生支持这种模式：
+                        </p>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full mr-3 mt-1">1</span>
+                                <span class="text-gray-600 dark:text-gray-400">类似 WebAssembly 的"独立运行环境"</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full mr-3 mt-1">2</span>
+                                <span class="text-gray-600 dark:text-gray-400">支持 window.createRealm() 让 JS 代码在不同"世界"中运行</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full mr-3 mt-1">3</span>
+                                <span class="text-gray-600 dark:text-gray-400">让 new Worker() 也能创建"隔离的 JS 作用域"</span>
+                            </li>
+                        </ul>
+                        <p class="text-gray-600 dark:text-gray-400 mt-6">
+                            如果 JavaScript 语言本身支持"多重运行时"，微前端开发将彻底摆脱 iframe 和 Proxy 的 hack，实现真正的原生 JavaScript 隔离。
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 终极真相 -->
+                <div class="mt-16">
+                    <h3 class="text-2xl font-semibold mb-6">终极真相</h3>
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                        <p class="text-gray-600 dark:text-gray-400">
+                            大多数人以为微前端的 JS 隔离只是防止污染 window，但真正深刻的真相是：Proxy 让 JavaScript 运行时具备了"平行宇宙"能力，使得每个子应用可以拥有自己的时间线、全局环境和作用域。
+                        </p>
+                        <p class="text-gray-600 dark:text-gray-400 mt-4">
+                            这不仅仅是微前端的需求，而是 JavaScript 语言的一种新范式：未来，我们可能不再需要 Proxy，JavaScript 本身就能像"多重现实"一样运行不同作用域的代码。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 进一步阅读 -->
+        <section class="mb-24 section-animate">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 pb-2 border-b border-gray-200 dark:border-gray-700">
+                    进一步阅读
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                        <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">《JavaScript 元编程》</h3>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                            深入探讨 JavaScript 的元编程能力，包括 Proxy、Reflect 和 Symbol 等高级特性，以及它们如何改变 JavaScript 的编程范式。
+                        </p>
+                        <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <span class="mr-2">作者: Keith Cirkel</span>
+                            <span>2020</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                        <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">《深入理解 Vue.js 实战》</h3>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                            详细解析 Vue 3 的响应式系统实现原理，以及 Proxy 如何成为 Vue 3 的核心技术，改变了前端框架的设计思路。
+                        </p>
+                        <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <span class="mr-2">作者: 尤雨溪, 霍春阳</span>
+                            <span>2021</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                        <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">《微前端架构与实践》</h3>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                            探讨微前端架构的设计理念和实现方法，特别是如何使用 Proxy 实现 JavaScript 运行时隔离，打造可靠的微前端应用。
+                        </p>
+                        <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <span class="mr-2">作者: 李沐沐</span>
+                            <span>2022</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                        <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">《ECMAScript 2015-2022: The Recent Parts》</h3>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                            Kyle Simpson 的论文，详细分析了 ES6 及以后版本中的新特性，特别是 Proxy 和 Reflect 如何改变 JavaScript 的编程模型。
+                        </p>
+                        <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <span class="mr-2">作者: Kyle Simpson</span>
+                            <span>2022</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-dark-100 p-6 rounded-xl shadow-md">
+                        <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">《响应式编程与 JavaScript 的未来》</h3>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                            探讨响应式编程范式如何改变 JavaScript 生态系统，以及 Proxy 在实现声明式、响应式编程中的关键作用。
+                        </p>
+                        <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <span class="mr-2">作者: André Staltz</span>
+                            <span>2021</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white dark:bg-dark-100 py-12 border-t border-gray-200 dark:border-gray-800">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <div class="w-12 h-12 bg-primary-500 rounded-lg flex items-center justify-center mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white">ES6 Proxy 深度解析</h3>
+                                                       <p class="text-gray-600 dark:text-gray-400">ES6 Proxy 深度解析</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                        </a>
+                        <a href="#" class="text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </a>
+                        <a href="#" class="text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">关于</h4>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                                本页面深入探讨了 ES6 Proxy 的四个核心概念：元编程能力、对象的本质转变、Vue 响应式系统和微前端隔离。通过这些视角，展示了 Proxy 如何改变 JavaScript 的编程范式。
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">链接</h4>
+                            <ul class="space-y-2 text-sm">
+                                <li>
+                                    <a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Proxy" class="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">MDN Proxy 文档</a>
+                                </li>
+                                <li>
+                                    <a href="https://v3.cn.vuejs.org/guide/reactivity.html" class="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">Vue 3 响应式原理</a>
+                                </li>
+                                <li>
+                                    <a href="https://es6.ruanyifeng.com/#docs/proxy" class="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">ES6 标准入门 - Proxy</a>
+                                </li>
+                                <li>
+                                    <a href="https://github.com/qiankun-demo/qiankun" class="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">qiankun 微前端框架</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">订阅更新</h4>
+                            <form class="space-y-4">
+                                <div>
+                                    <input type="email" placeholder="你的邮箱地址" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-200 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                </div>
+                                <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all">
+                                    订阅
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-t border-gray-200 dark:border-gray-700 mt-8 pt-8 text-center">
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">
+                        &copy; 2023 ES6 Proxy 深度解析. 保留所有权利.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 主题切换按钮 -->
+    <button id="theme-toggle" class="fixed bottom-6 right-6 p-3 bg-white dark:bg-dark-200 rounded-full shadow-lg hover:shadow-xl transition-all z-50">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 dark:text-gray-300 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 dark:text-gray-300 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+    </button>
+
+    <!-- 返回顶部按钮 -->
+    <button id="back-to-top" class="fixed bottom-6 right-20 p-3 bg-white dark:bg-dark-200 rounded-full shadow-lg hover:shadow-xl transition-all z-50 hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+    </button>
+
+    <!-- JavaScript -->
+    <script>
+        // 主题切换
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        // 检查本地存储中的主题偏好
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        } else {
+            html.classList.remove('dark');
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        });
+        
+        // 返回顶部按钮
+        const backToTop = document.getElementById('back-to-top');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.classList.remove('hidden');
+            } else {
+                backToTop.classList.add('hidden');
+            }
+        });
+        
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        
+        // 代码块复制功能
+        document.querySelectorAll('.copy-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const codeBlock = button.previousElementSibling;
+                const code = codeBlock.textContent;
+                
+                navigator.clipboard.writeText(code).then(() => {
+                    button.textContent = '已复制!';
+                    setTimeout(() => {
+                        button.textContent = '复制';
+                    }, 2000);
+                });
+            });
+        });
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // 动画效果
+        const animateElements = () => {
+            const sections = document.querySelectorAll('.section-animate');
+            
+            sections.forEach(section => {
+                const sectionTop = section.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                
+                if (sectionTop < windowHeight * 0.75) {
+                    section.classList.add('animate-fade-in');
+                }
+            });
+        };
+        
+        window.addEventListener('scroll', animateElements);
+        window.addEventListener('load', animateElements);
+        
+        // 概念卡片悬停效果
+        document.querySelectorAll('.concept-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('transform', 'scale-105', 'shadow-lg');
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('transform', 'scale-105', 'shadow-lg');
+            });
+        });
+    </script>
+</body>
+</html>
