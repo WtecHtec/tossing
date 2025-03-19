@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React.memo vs useMemo：深入理解优化策略</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+                        serif: ['Noto Serif SC', 'serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        secondary: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* 自定义样式 */
+        .code-block {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+        
+        .dark .code-block {
+            background-color: #0f172a;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .dark ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        
+        /* 代码高亮 */
+        .token.comment { color: #8b9cb5; }
+        .token.keyword { color: #ff79c6; }
+        .token.string { color: #f1fa8c; }
+        .token.function { color: #66d9ef; }
+        .token.operator { color: #ff79c6; }
+        .token.variable { color: #bd93f9; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <!-- 主容器 -->
+    <div class="min-h-screen flex flex-col">
+        <!-- 导航栏 -->
+        <nav class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <span class="text-xl font-bold text-primary-600 dark:text-primary-400">React 优化指南</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+                            <i class="fas fa-moon dark:hidden"></i>
+                            <i class="fas fa-sun hidden dark:block"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主要内容 -->
+        <main class="flex-grow">
+            <!-- 英雄区域 -->
+            <section class="py-12 md:py-20 bg-gradient-to-br from-primary-500 to-secondary-600 text-white">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center fade-in">
+                        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold font-serif mb-6">React.memo vs useMemo</h1>
+                        <p class="text-xl md:text-2xl max-w-3xl mx-auto opacity-90">深入理解React优化策略的真相：它们不是在"优化渲染"，而是在"延迟计算代价"</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 内容概述 -->
+            <section class="py-12 bg-white dark:bg-gray-800">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="prose prose-lg dark:prose-invert max-w-none">
+                        <div class="fade-in">
+                            <h2 class="text-3xl font-bold font-serif mb-6 text-center">一个被误解的真相</h2>
+                            <p class="text-xl text-center mb-12 max-w-4xl mx-auto">React.memo 和 useMemo 主要优化的是"不同的东西"，很多开发者误用它们，导致"优化"反而适得其反。</p>
+                        </div>
+
+                        <!-- 对比卡片 -->
+                        <div class="grid md:grid-cols-2 gap-8 mb-16">
+                            <!-- React.memo 卡片 -->
+                            <div class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-lg p-8 card-hover fade-in">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mr-4">
+                                        <i class="fas fa-puzzle-piece text-primary-600 dark:text-primary-400 text-xl"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold">React.memo</h3>
+                                </div>
+                                <p class="mb-4">主要优化<span class="font-semibold text-primary-600 dark:text-primary-400">组件级别</span>的渲染，避免整个组件因为父组件的重新渲染而不必要地更新。</p>
+                                <div class="mt-6">
+                                    <div class="flex items-center mb-2">
+                                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                        <p>适合用于接收相同 props 的组件，避免无意义的重新渲染</p>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                                        <p>如果 props 变化频繁，它的作用就很有限，甚至可能有额外的对比开销</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- useMemo 卡片 -->
+                            <div class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-lg p-8 card-hover fade-in">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-12 h-12 bg-secondary-100 dark:bg-secondary-900 rounded-full flex items-center justify-center mr-4">
+                                        <i class="fas fa-calculator text-secondary-600 dark:text-secondary-400 text-xl"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold">useMemo</h3>
+                                </div>
+                                <p class="mb-4">主要优化<span class="font-semibold text-secondary-600 dark:text-secondary-400">计算级别</span>的开销，避免在组件内部重复执行昂贵的计算。</p>
+                                <div class="mt-6">
+                                    <div class="flex items-center mb-2">
+                                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                        <p>适合计算开销大且依赖项不经常变动的情况，避免重复计算</p>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                                        <p>如果计算本身很轻量，useMemo 反而会因为缓存带来额外开销</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 代码示例部分 -->
+            <section class="py-12 bg-gray-50 dark:bg-gray-900">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h2 class="text-3xl font-bold font-serif mb-12 text-center fade-in">代码示例与实践</h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-8 mb-16">
+                        <!-- React.memo 代码示例 -->
+                        <div class="fade-in">
+                            <h3 class="text-2xl font-bold mb-4">React.memo 示例</h3>
+                            <p class="mb-4">适用于纯展示组件（Pure Component），当父组件的 props 传入没有变化时，就不会重新渲染。</p>
+                            <pre class="code-block p-4 rounded-lg mb-4"><code class="language-jsx">const ExpensiveComponent = React.memo(({ data }) => {
+  console.log('渲染了 ExpensiveComponent');
+  return &lt;div&gt;{data.value}&lt;/div&gt;;
+});</code></pre>
+                            <div class="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-500 p-4 rounded">
+                                <p class="text-yellow-800 dark:text-yellow-200"><strong>注意：</strong> React.memo 不会减少渲染，只是减少了组件更新。如果 props 频繁变化，它反而会增加额外的 props 对比开销。</p>
+                            </div>
+                        </div>
+
+                        <!-- useMemo 代码示例 -->
+                        <div class="fade-in">
+                            <h3 class="text-2xl font-bold mb-4">useMemo 示例</h3>
+                            <p class="mb-4">适用于计算昂贵的逻辑，比如复杂计算、数组过滤等。</p>
+                            <pre class="code-block p-4 rounded-lg mb-4"><code class="language-jsx">const filteredList = useMemo(() => {
+  console.log('计算了 filteredList');
+  return list.filter(item => item.isActive);
+}, [list]);</code></pre>
+                                                     <div class="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-500 p-4 rounded">
+                                <p class="text-yellow-800 dark:text-yellow-200"><strong>注意：</strong> useMemo 并不会"记住"整个值，而是只缓存计算结果，如果计算开销不大，它的缓存反而会带来不必要的性能损耗。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 深入理解部分 -->
+            <section class="py-12 bg-white dark:bg-gray-800">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h2 class="text-3xl font-bold font-serif mb-12 text-center fade-in">深入理解：延迟计算代价</h2>
+                    
+                    <div class="mb-16">
+                        <div class="prose prose-lg dark:prose-invert max-w-none fade-in">
+                            <p class="text-xl mb-8">React.memo 和 useMemo 不是在"优化渲染"，而是在"延迟计算代价"——它们并不会让 React 变快，而是让 React 在某些情况下"不做事"。</p>
+                            
+                            <div class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-lg p-8 mb-8">
+                                <h3 class="text-2xl font-bold mb-4">误区：React.memo / useMemo 可以提升 React 组件的性能</h3>
+                                <p>很多人以为 React.memo 和 useMemo 是让组件跑得更快，但实际上，它们只是换了一种时间分配策略：</p>
+                                <ul class="mt-4 space-y-4">
+                                    <li class="flex">
+                                        <span class="text-primary-600 dark:text-primary-400 mr-2">•</span>
+                                        <span><strong>React.memo</strong> 只是推迟重新渲染，而不是让渲染变快。它的本质是在 React 需要重新渲染时，额外做一次 props 浅比较，如果 props 没变，就跳过渲染。这意味着，如果 props 变化频繁，React.memo 的浅比较反而会增加开销，导致 React 并没有变快，甚至更慢了。</span>
+                                    </li>
+                                    <li class="flex">
+                                        <span class="text-secondary-600 dark:text-secondary-400 mr-2">•</span>
+                                        <span><strong>useMemo</strong> 只是推迟重新计算，而不是让计算变快。它本质上是在依赖项不变时复用之前的计算结果，但 React 仍然要维护这部分缓存的生命周期，这意味着如果计算本身很轻量，useMemo 反而会带来额外的内存和对比开销。</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- 可视化图表 -->
+                        <div class="grid md:grid-cols-2 gap-8 mb-8 fade-in">
+                            <div class="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6">
+                                <h4 class="text-xl font-bold mb-4 text-center">React.memo 性能权衡</h4>
+                                <canvas id="memoChart" width="400" height="300"></canvas>
+                            </div>
+                            <div class="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6">
+                                <h4 class="text-xl font-bold mb-4 text-center">useMemo 性能权衡</h4>
+                                <canvas id="useMemoChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- 真相解析 -->
+                        <div class="prose prose-lg dark:prose-invert max-w-none fade-in">
+                            <div class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-lg p-8 mb-8">
+                                <h3 class="text-2xl font-bold mb-4">真相：React.memo / useMemo 本质上是"权衡计算时机"，而非"性能优化"</h3>
+                                
+                                <div class="mb-6">
+                                    <h4 class="text-xl font-semibold mb-2">1. React.memo 让 React 选择"等一下"</h4>
+                                    <ul class="space-y-2">
+                                        <li class="flex">
+                                            <span class="text-green-600 dark:text-green-400 mr-2">•</span>
+                                            <span>如果组件更新代价大于浅比较代价（即 props 变化少但渲染成本高），那么 React.memo 会带来优化。</span>
+                                        </li>
+                                        <li class="flex">
+                                            <span class="text-red-600 dark:text-red-400 mr-2">•</span>
+                                            <span>但如果组件更新代价小于浅比较代价（即组件本身渲染很快，但 props 变化频繁），React.memo 反而会拖慢 React。</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                
+                                <div>
+                                    <h4 class="text-xl font-semibold mb-2">2. useMemo 让计算"换个时间发生"</h4>
+                                    <ul class="space-y-2">
+                                        <li class="flex">
+                                            <span class="text-green-600 dark:text-green-400 mr-2">•</span>
+                                            <span>如果计算开销大，且依赖项变化少，useMemo 会延迟计算成本，在下一次依赖变化时才重新计算。</span>
+                                        </li>
+                                        <li class="flex">
+                                            <span class="text-red-600 dark:text-red-400 mr-2">•</span>
+                                            <span>但如果计算开销小，React 维护 useMemo 的缓存反而会带来额外的管理成本，使性能更低。</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 关键点和最佳实践 -->
+            <section class="py-12 bg-gray-50 dark:bg-gray-900">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h2 class="text-3xl font-bold font-serif mb-12 text-center fade-in">关键点与最佳实践</h2>
+                    
+                    <div class="mb-16">
+                        <!-- 关键点 -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8 fade-in">
+                            <h3 class="text-2xl font-bold mb-6">关键点：改变"工作安排"而非减少"工作量"</h3>
+                            <p class="mb-6">React.memo / useMemo 不是减少 React 的"工作量"，而是改变"工作安排"。如果你误以为它们会让 React 执行得更快，你可能会错误地滥用它们。</p>
+                            
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="bg-primary-50 dark:bg-primary-900/30 p-6 rounded-lg">
+                                    <h4 class="font-bold text-xl mb-3 text-primary-700 dark:text-primary-300">React.memo 适用场景</h4>
+                                    <p>"昂贵组件"（渲染成本远大于 shallowEqual props 检查的成本）</p>
+                                </div>
+                                <div class="bg-secondary-50 dark:bg-secondary-900/30 p-6 rounded-lg">
+                                    <h4 class="font-bold text-xl mb-3 text-secondary-700 dark:text-secondary-300">useMemo 适用场景</h4>
+                                    <p>"昂贵计算"（计算成本远大于缓存的管理成本）</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                <p class="text-red-800 dark:text-red-200"><i class="fas fa-exclamation-triangle mr-2"></i>如果组件本身很轻量，或者计算成本不高，使用它们反而会拖累 React！</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 最佳实践 -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 fade-in">
+                            <h3 class="text-2xl font-bold mb-6">最佳实践建议</h3>
+                            
+                            <div class="space-y-6">
+                                <div class="flex">
+                                    <div class="flex-shrink-0 h-12 w-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-check text-green-600 dark:text-green-400"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h4 class="text-lg font-semibold">先测量，再优化</h4>
+                                        <p class="mt-1">在应用 React.memo 或 useMemo 之前，先使用 React Profiler 或性能工具确认瓶颈所在。</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex">
+                                    <div class="flex-shrink-0 h-12 w-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-check text-green-600 dark:text-green-400"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h4 class="text-lg font-semibold">考虑组件设计</h4>
+                                        <p class="mt-1">有时候，重新设计组件结构比添加记忆化更有效。考虑将大型组件拆分为更小的组件。</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex">
+                                    <div class="flex-shrink-0 h-12 w-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-check text-green-600 dark:text-green-400"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h4 class="text-lg font-semibold">避免过早优化</h4>
+                                        <p class="mt-1">不要在没有性能问题的地方预先添加 React.memo 或 useMemo。过早优化可能会增加代码复杂性而没有实际收益。</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex">
+                                    <div class="flex-shrink-0 h-12 w-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-check text-green-600 dark:text-green-400"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h4 class="text-lg font-semibold">理解依赖项</h4>
+                                        <p class="mt-1">确保正确设置 useMemo 的依赖数组，避免遗漏依赖导致缓存失效或包含不必要的依赖导致过度计算。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 终极启示 -->
+            <section class="py-12 bg-gradient-to-br from-primary-500 to-secondary-600 text-white">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center max-w-3xl mx-auto fade-in">
+                        <h2 class="text-3xl font-bold font-serif mb-6">终极启示</h2>
+                        <p class="text-xl mb-8">React 不是在变快，而是在选择"什么时候做事"</p>
+                        <div class="text-left bg-white/10 backdrop-blur-sm p-6 rounded-xl">
+                            <p class="mb-4">React.memo 和 useMemo 不会让你的组件运行得更快，它们只是试图减少不必要的工作。但如果这个额外的"减少"本身需要付出很高的代价，那就变得得不偿失。</p>
+                            <p>所以，与其想着"优化渲染"，不如思考"哪里真正需要优化"——有时候，最好的优化策略是让 React 自由地重新渲染，而不是人为干预它的渲染逻辑。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 进一步阅读 -->
+            <section class="py-12 bg-white dark:bg-gray-800">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h2 class="text-3xl font-bold font-serif mb-12 text-center fade-in">进一步阅读</h2>
+                    
+                                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in">
+                        <!-- 书籍推荐 -->
+                        <div class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-lg p-6 card-hover">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-book text-primary-600 dark:text-primary-400"></i>
+                                </div>
+                                <h3 class="text-xl font-bold">React设计模式与最佳实践</h3>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400">作者：Carlos Santana Roldán</p>
+                            <p class="mt-2">深入探讨React组件设计模式，包括性能优化策略和记忆化技术的最佳实践。</p>
+                        </div>
+                        
+                        <div class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-lg p-6 card-hover">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-book text-primary-600 dark:text-primary-400"></i>
+                                </div>
+                                <h3 class="text-xl font-bold">深入浅出React和Redux</h3>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400">作者：程墨</p>
+                            <p class="mt-2">从基础到高级，全面讲解React生态系统，包括性能优化和Hooks的正确使用方式。</p>
+                        </div>
+                        
+                        <div class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-lg p-6 card-hover">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-book text-primary-600 dark:text-primary-400"></i>
+                                </div>
+                                <h3 class="text-xl font-bold">React性能优化指南</h3>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400">作者：Ivan Akulov</p>
+                            <p class="mt-2">专注于React应用性能优化的实用指南，包含大量实际案例和性能测量方法。</p>
+                        </div>
+                        
+                        <!-- 文章推荐 -->
+                        <div class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-lg p-6 card-hover">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-secondary-100 dark:bg-secondary-900 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-file-alt text-secondary-600 dark:text-secondary-400"></i>
+                                </div>
+                                <h3 class="text-xl font-bold">React官方文档：记忆化</h3>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400">React团队</p>
+                            <p class="mt-2">官方文档中关于React.memo、useMemo和useCallback的详细解释和最佳实践指南。</p>
+                        </div>
+                        
+                        <div class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-lg p-6 card-hover">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-secondary-100 dark:bg-secondary-900 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-file-alt text-secondary-600 dark:text-secondary-400"></i>
+                                </div>
+                                <h3 class="text-xl font-bold">《你可能不需要派生状态》</h3>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400">React团队博客</p>
+                            <p class="mt-2">探讨React中状态管理和计算属性的最佳实践，与useMemo的使用密切相关。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="bg-gray-900 text-white py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-4">React优化指南</h3>
+                        <p class="text-gray-400 mb-4">深入理解React.memo和useMemo的正确使用方式，避免常见的优化误区。</p>
+                        <p class="text-gray-400">© 2023 React优化指南. 保留所有权利。</p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-4">关于作者</h3>
+                        <p class="text-gray-400 mb-4">资深前端工程师，专注于React生态系统和性能优化。</p>
+                        <div class="flex space-x-4">
+                            <a href="https://github.com/author" class="text-gray-400 hover:text-white transition-colors">
+                                <i class="fab fa-github text-xl"></i>
+                            </a>
+                            <a href="https://twitter.com/author" class="text-gray-400 hover:text-white transition-colors">
+                                <i class="fab fa-twitter text-xl"></i>
+                            </a>
+                            <a href="https://linkedin.com/in/author" class="text-gray-400 hover:text-white transition-colors">
+                                <i class="fab fa-linkedin text-xl"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // 深色模式切换
+        const themeToggle = document.getElementById('theme-toggle');
+        
+        // 检查系统偏好
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        // 切换主题
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+        
+        // 监听系统主题变化
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (e.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+        
+        // 图表初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // React.memo 图表
+            const memoCtx = document.getElementById('memoChart').getContext('2d');
+            const memoChart = new Chart(memoCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Props变化少', 'Props变化频繁'],
+                    datasets: [
+                        {
+                            label: '不使用React.memo',
+                            data: [100, 100],
+                            backgroundColor: 'rgba(14, 165, 233, 0.5)',
+                            borderColor: 'rgba(14, 165, 233, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '使用React.memo',
+                            data: [30, 120],
+                            backgroundColor: 'rgba(139, 92, 246, 0.5)',
+                            borderColor: 'rgba(139, 92, 246, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: '渲染时间对比 (ms，越低越好)'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // useMemo 图表
+            const useMemoCtx = document.getElementById('useMemoChart').getContext('2d');
+            const useMemoChart = new Chart(useMemoCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['轻量计算', '昂贵计算'],
+                    datasets: [
+                        {
+                            label: '不使用useMemo',
+                            data: [10, 200],
+                            backgroundColor: 'rgba(14, 165, 233, 0.5)',
+                            borderColor: 'rgba(14, 165, 233, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '使用useMemo',
+                            data: [15, 50],
+                            backgroundColor: 'rgba(139, 92, 246, 0.5)',
+                            borderColor: 'rgba(139, 92, 246, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: '计算时间对比 (ms，越低越好)'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+        
+        // 滚动动画
+        const fadeElements = document.querySelectorAll('.fade-in');
+        
+        const fadeInObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1;
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+        
+        fadeElements.forEach(element => {
+            element.style.opacity = 0;
+            element.style.transform = 'translateY(20px)';
+            element.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            fadeInObserver.observe(element);
+        });
+    </script>
+</body>
+</html>
