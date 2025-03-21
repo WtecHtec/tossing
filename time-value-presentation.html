@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>年轻人，如何把你的时间卖贵？</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@latest/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #e74c3c;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --gradient-primary: linear-gradient(135deg, #3498db, #2ecc71);
+            --gradient-secondary: linear-gradient(135deg, #e74c3c, #f39c12);
+            --text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', Tahoma, Arial, Roboto, "Droid Sans", "Helvetica Neue", "Droid Sans Fallback", "Heiti SC", "Hiragino Sans GB", Simsun, sans-self;
+            background-color: var(--light-color);
+            color: var(--dark-color);
+        }
+
+        .reveal {
+            font-size: 2rem;
+        }
+
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+            font-family: 'Noto Serif SC', serif;
+            margin-bottom: 0.8em;
+            color: var(--dark-color);
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-shadow: var(--text-shadow);
+        }
+
+        .reveal h1 {
+            font-size: 2.5em;
+            text-transform: none;
+        }
+
+        .reveal h2 {
+            font-size: 1.8em;
+            text-transform: none;
+        }
+
+        .reveal h3 {
+            font-size: 1.4em;
+            text-transform: none;
+        }
+
+        .reveal p {
+            line-height: 1.6;
+            margin-bottom: 1em;
+        }
+
+        .reveal ul, .reveal ol {
+            display: inline-block;
+            text-align: left;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .reveal li {
+            margin-bottom: 0.5em;
+        }
+
+        /* 封面样式 */
+        .cover {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            background: var(--gradient-primary);
+            color: white;
+            text-align: center;
+            padding: 0 2em;
+        }
+
+        .cover h1 {
+            font-size: 3em;
+            margin-bottom: 0.2em;
+            color: white;
+        }
+
+        .cover h2 {
+            font-size: 1.5em;
+            margin-bottom: 1em;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+        }
+
+        /* 章节分隔页 */
+        .chapter {
+            background: var(--gradient-secondary);
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .chapter h2 {
+            font-size: 2.5em;
+            color: white;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 2em;
+            margin: 1em 0;
+            box-shadow: var(--box-shadow);
+            text-align: left;
+        }
+
+        /* 强调文本 */
+        .highlight {
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        .primary {
+            color: var(--primary-color);
+        }
+
+        .secondary {
+            color: var(--secondary-color);
+        }
+
+        /* 图标样式 */
+        .icon {
+            margin-right: 0.5em;
+            color: var(--primary-color);
+        }
+
+        /* 表格样式 */
+        .reveal table {
+            margin: 1em auto;
+            border-collapse: collapse;
+            width: 90%;
+        }
+
+        .reveal table th {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.8em;
+            text-align: left;
+        }
+
+        .reveal table td {
+            padding: 0.8em;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .reveal table tr:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        /* 两列布局 */
+        .columns {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .column {
+            flex: 1;
+            padding: 0 1em;
+        }
+
+        /* 引用样式 */
+        blockquote {
+            background-color: rgba(0, 0, 0, 0.05);
+            border-left: 5px solid var(--primary-color);
+            padding: 1em;
+            margin: 1em 0;
+            font-style: italic;
+        }
+
+        /* 标签样式 */
+        .tag {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.3em 0.8em;
+            border-radius: 20px;
+            margin: 0.2em;
+            font-size: 0.8em;
+        }
+
+        /* 进度条样式 */
+        .progress-bar {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin: 1em 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 20px;
+            background: var(--gradient-primary);
+            border-radius: 5px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* 动画效果 */
+        .reveal .slides section .fragment.highlight-current-blue.current-fragment {
+            color: var(--primary-color);
+        }
+
+        /* 自定义背景 */
+        .bg-light {
+            background-color: var(--light-color);
+        }
+
+        .bg-gradient {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .bg-gradient h2, .bg-gradient h3 {
+            color: white;
+        }
+
+        /* 比较表格 */
+        .comparison {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+        }
+
+        .comparison th {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 1em;
+            text-align: center;
+        }
+
+        .comparison td {
+            padding: 1em;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .comparison tr:first-child td {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        /* 时间线样式 */
+        .timeline {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            background-color: var(--primary-color);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -3px;
+        }
+
+        .timeline-item {
+            padding: 10px 40px;
+            position: relative;
+            width: 50%;
+            box-sizing: border-box;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            right: -12px;
+            background-color: white;
+            border: 4px solid var(--primary-color);
+            top: 15px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .timeline-left {
+            left: 0;
+        }
+
+        .timeline-right {
+            left: 50%;
+        }
+
+        .timeline-right::after {
+            left: -12px;
+        }
+
+        .timeline-content {
+            padding: 20px;
+            background-color: white;
+            position: relative;
+            border-radius: 6px;
+            box-shadow: var(--box-shadow);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .reveal {
+                font-size: 1.5rem;
+            }
+            
+            .columns {
+                flex-direction: column;
+            }
+            
+            .column {
+                padding: 0;
+                margin-bottom: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- 封面页 -->
+            <section class="cover">
+                <h1>年轻人，如何把你的时间卖贵？</h1>
+                <h2>"时间不是卖的，而是投资的"</h2>
+                <p><i class="fas fa-clock fa-3x" style="margin: 0.5em; opacity: 0.8;"></i></p>
+            </section>
+
+            <!-- 导言 -->
+            <section>
+                <h2>很多人觉得，把时间卖贵，就是找一份高薪工作，或者做副业赚更多钱。</h2>
+                <p class="fragment">但真正的深刻之处在于：</p>
+                <blockquote class="fragment">
+                    <p>你并不是在卖时间，而是在<span class="highlight">投资时间</span>。</p>
+                </blockquote>
+            </section>
+
+            <!-- 第一部分：卖时间 vs. 投资时间 -->
+            <section>
+                <h2>1. 卖时间 vs. 投资时间</h2>
+                <div class="columns">
+                    <div class="column card">
+                        <h3><i class="icon fas fa-exchange-alt"></i>卖时间</h3>
+                        <p>你把时间换成工资，按小时计算，赚得更多，但本质上是线性增长。</p>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 50%;"></div>
+                        </div>
+                    </div>
+                    <div class="column card">
+                        <h3><i class="icon fas fa-chart-line"></i>投资时间</h3>
+                        <p>你把时间用于提升技能、建立影响力、构建资产，长期来看是指数增长。</p>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 90%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="fragment"><strong>核心区别：</strong>卖时间是<span class="highlight">消耗</span>，投资时间是<span class="highlight">积累</span>。</p>
+            </section>
+
+            <!-- 第二部分：如何让时间增值 -->
+            <section>
+                <h2>2. 如何让时间增值？</h2>
+                <p>想让时间变得值钱，你得创造时间的杠杆，让你单位时间的价值不断增加。</p>
+            </section>
+
+            <!-- 杠杆类型 -->
+            <section>
+                <h3>杠杆有三种：</h3>
+                <div class="card fragment">
+                    <h3><i class="icon fas fa-brain"></i>技能杠杆</h3>
+                    <p>让你的能力更稀缺，比如掌握AI、编程、商业思维等。</p>
+                </div>
+                <div class="card fragment">
+                    <h3><i class="icon fas fa-bullhorn"></i>影响力杠杆</h3>
+                    <p>通过内容（写作、视频、开源项目）让更多人认识你，让你的工作影响力扩大。</p>
+                </div>
+                <div class="card fragment">
+                    <h3><i class="icon fas fa-coins"></i>资本杠杆</h3>
+                    <p>投资自己、投资资源，让钱帮你赚钱，而不是仅靠工时换钱。</p>
+                </div>
+            </section>
+
+            <!-- 第三部分：短期 vs. 长期 -->
+            <section class="bg-gradient">
+                <h2>3. 短期 vs. 长期</h2>
+                <h3>玩大游戏，而不是小胜利</h3>
+            </section>
+
+            <section>
+                <blockquote>
+                    <p>大多数人只考虑<strong>"这份工作给多少钱"</strong>，但聪明人考虑的是<strong>"这段时间能让我未来赚多少钱"</strong>。</p>
+                </blockquote>
+                                <div class="columns">
+                    <div class="column">
+                        <div class="card">
+                            <h3><i class="icon fas fa-hourglass-start"></i>短期思维</h3>
+                            <p>拿高工资，但几年后竞争力下降。</p>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="card">
+                            <h3><i class="icon fas fa-hourglass-end"></i>长期思维</h3>
+                            <p>选择那些让你能力成长最快、让你视野更广、让你接触到更强资源的机会。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 第四部分：具体怎么做 -->
+            <section>
+                <h2>4. 具体怎么做？</h2>
+                <div class="timeline">
+                    <div class="timeline-item timeline-left">
+                        <div class="timeline-content">
+                            <h3>1-3年</h3>
+                            <p>积累核心技能（编程、AI、商业等），选择成长快的环境，而不是工资高的地方。</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item timeline-right">
+                        <div class="timeline-content">
+                            <h3>3-5年</h3>
+                            <p>建立个人品牌（写作、开源、分享），让别人愿意找你，而不是你去找机会。</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item timeline-left">
+                        <div class="timeline-content">
+                            <h3>5-10年</h3>
+                            <p>创造资产（产品、投资、人脉网络），让你的时间具有复利效应。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 总结 -->
+            <section class="bg-gradient">
+                <h2>总结</h2>
+                <blockquote>
+                    <p>时间不是卖的，而是投资的。想要卖贵，就要先积累时间的价值，而不是只想着涨工资。</p>
+                </blockquote>
+            </section>
+
+            <!-- 第二章：不要卖时间，要卖价值溢价 -->
+            <section class="chapter">
+                <h2>不要卖时间，要卖价值溢价</h2>
+            </section>
+
+            <!-- 导言 -->
+            <section>
+                <h3>大多数人认为赚钱是靠"卖时间"，聪明人知道赚钱是靠"卖价值"</h3>
+                <p class="fragment">但真正深刻的认知是——</p>
+                <blockquote class="fragment">
+                    <p>最贵的时间，是别人愿意为"你的存在"付钱，而不是你的劳动力。</p>
+                </blockquote>
+                <p class="fragment highlight">你的时间之所以便宜，不是因为你不努力，而是因为它没有溢价。</p>
+            </section>
+
+            <!-- 时间溢价 -->
+            <section>
+                <h2>1. 你不是在卖时间，而是在卖你的"时间溢价"</h2>
+                <p>一个普通打工人，每天工作8小时，可能赚500元；但一个顶级投资人，每天工作8小时，可能赚500万。</p>
+                <p class="fragment">他们的时间本质上是一样的，但价值却相差万倍。为什么？</p>
+                <p class="fragment highlight">因为他们卖的不是"时间"，而是时间附加的"价值溢价"。</p>
+            </section>
+
+            <!-- 时间类型 -->
+            <section>
+                <h3>时间的四种类型：</h3>
+                <div class="card fragment">
+                    <h3><i class="icon fas fa-user-clock"></i>劳动力型时间</h3>
+                    <p>按小时计费，你的时间本身没溢价，比如流水线工人、普通程序员。</p>
+                </div>
+                <div class="card fragment">
+                    <h3><i class="icon fas fa-tools"></i>技能型时间</h3>
+                    <p>你的时间因为技能值钱，比如优秀程序员、医生、律师。</p>
+                </div>
+                <div class="card fragment">
+                    <h3><i class="icon fas fa-crown"></i>品牌型时间</h3>
+                    <p>你的时间本身就是资产，别人付钱买你的名气，比如顶级咨询师、投资人、企业家。</p>
+                </div>
+                <div class="card fragment">
+                    <h3><i class="icon fas fa-rocket"></i>杠杆型时间</h3>
+                    <p>你根本不需要花时间，钱自动流入，比如投资人、公司创始人、IP商业化。</p>
+                </div>
+            </section>
+
+            <section>
+                <blockquote>
+                    <p>你的目标不是"让时间更贵"，而是让时间拥有溢价，让别人愿意花大钱买你的影响力、品牌、信任、资源，而不仅仅是你的工时。</p>
+                </blockquote>
+            </section>
+
+            <!-- 可替代性 -->
+            <section>
+                <h2>2. 你为什么卖不贵？——因为你的时间是"可替代"的</h2>
+                <p>时间值不值钱，本质上取决于<span class="highlight">"你的时间有多不可替代"</span>。</p>
+            </section>
+
+            <section>
+                <h3>替代性决定价值</h3>
+                <table class="comparison">
+                    <tr>
+                        <td>替代性</td>
+                        <td>代表人群</td>
+                        <td>市场价值</td>
+                    </tr>
+                    <tr>
+                        <td>容易被替代的人</td>
+                        <td>普通职员、低端程序员、文员</td>
+                        <td>低</td>
+                    </tr>
+                    <tr>
+                        <td>不容易被替代的人</td>
+                        <td>技术专家、资深产品经理、头部KOL</td>
+                        <td>高</td>
+                    </tr>
+                    <tr>
+                        <td>根本无法被替代的人</td>
+                        <td>乔布斯、马斯克、巴菲特</td>
+                        <td>无价</td>
+                    </tr>
+                </table>
+                <p class="fragment">想卖贵时间，你要让自己越来越不可替代，直到市场为你溢价。</p>
+            </section>
+
+            <!-- 时间资产 -->
+            <section>
+                <h2>3. 如何打造时间的溢价？——构建"时间资产"</h2>
+                <blockquote>
+                    <p>真正富人不靠卖时间赚钱，而是靠"时间资产"赚钱。时间资产，是你睡觉的时候还能给你带来收入的东西。</p>
+                </blockquote>
+            </section>
+
+            <!-- 知识型时间资产 -->
+            <section>
+                <h3>（1）创造"知识型时间资产"</h3>
+                <p>你可以通过写作、开源项目、教学等方式，把你的经验变成可复用的资产。</p>
+                <div class="columns">
+                    <div class="column">
+                        <div class="card">
+                            <p><i class="icon fas fa-pen-fancy"></i>你写的一篇技术文章，10年后还能帮你带来影响力。</p>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="card">
+                            <p><i class="icon fas fa-code-branch"></i>你做的一个开源工具，5年后还能让人主动找你合作。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card fragment">
+                    <p><i class="icon fas fa-chalkboard-teacher"></i>你录的一门课程，几年后还能帮你带来被动收入。</p>
+                </div>
+                <blockquote class="fragment">
+                    <p>"写代码会过时，但写思想不会。"</p>
+                </blockquote>
+            </section>
+
+            <!-- 品牌型时间资产 -->
+            <section>
+                <h3>（2）构建"品牌型时间资产"</h3>
+                <div class="card">
+                    <p><i class="icon fas fa-rss"></i>开公众号、YouTube频道、博客，把你的思考体系公开，让别人记住你。</p>
+                </div>
+                <div class="card">
+                    <p><i class="icon fas fa-award"></i>在行业里做出独特贡献，成为某个领域的"权威"。</p>
+                </div>
+                <div class="card">
+                    <p><i class="icon fas fa-trademark"></i>让你的名字变成品牌，让别人"找你"，而不是你"找工作"。</p>
+                </div>
+            </section>
+
+            <!-- 杠杆型时间资产 -->
+            <section>
+                <h3>（3）布局"杠杆型时间资产"</h3>
+                <div class="card">
+                    <p><i class="icon fas fa-chart-pie"></i>投资比工作赚钱快，早点学会让钱帮你工作。</p>
+                </div>
+                <div class="card">
+                    <p><i class="icon fas fa-laptop-code"></i>你的软件产品、SaaS、自动化工具，都能成为"时间杠杆"，让你不工作也有收入。</p>
+                </div>
+                <blockquote class="fragment">
+                    <p>你的目标不是"把时间卖贵"，而是"让时间本身带来持续收益"。</p>
+                </blockquote>
+            </section>
+
+            <!-- 终极认知 -->
+            <section class="bg-gradient">
+                <h2>4. 终极认知：你想卖贵时间，还是摆脱时间的束缚？</h2>
+                <div class="columns">
+                    <div class="column">
+                        <div class="card">
+                            <h3>穷人思维</h3>
+                            <p>如何让时间卖贵？</p>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="card">
+                            <h3>富人思维</h3>
+                            <p>如何摆脱时间换钱？</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <ul>
+                    <li class="fragment">如果你的目标只是卖贵时间，你最多变成高薪打工人。</li>
+                    <li class="fragment">如果你的目标是让时间资产化，你才能进入真正的财富自由游戏。</li>
+                </ul>
+                <blockquote class="fragment">
+                    <p>你要做的不是让时间更贵，而是让自己拥有不卖时间也能赚钱的能力。</p>
+                </blockquote>
+                <p class="fragment highlight">世界上最赚钱的人，从来不卖时间，他们只卖影响力、品牌、信任和资产。</p>
+            </section>
+
+            <!-- 第三章：让时间为你赚钱 -->
+            <section class="chapter">
+                <h2>让时间为你赚钱，而不是你为时间定价</h2>
+            </section>
+
+            <!-- 导言 -->
+            <section>
+                <h3>我们经常问："怎么把时间卖贵？"</h3>
+                <p class="fragment">但这个问题本身就错了。</p>
+                <blockquote class="fragment">
+                    <p>真正有钱人不会想着"卖时间"，而是思考："如何让时间成为财富增长的杠杆？"</p>
+                </blockquote>
+            </section>
+
+            <section>
+                <p>大多数人穷，是因为他们被困在了"线性时间-收入模型"里，而富人之所以富，是因为他们掌握了"非线性时间-财富模型"。</p>
+                <blockquote class="fragment">
+                    <p>真正的深刻之处在于："你以为你在赚钱，其实你是在出卖自己的未来。"</p>
+                </blockquote>
+            </section>
+
+            <!-- 时间的本质 -->
+            <section>
+                <h2>1. 你真的在"卖"时间吗？</h2>
+                <p>大部分人以为，时间是一种可以交易的资源，比如：</p>
+                <ul>
+                    <li class="fragment">普通职员：按月领工资，每天8小时换薪水。</li>
+                    <li class="fragment">高薪专家：按小时收费，单价更高，但仍然是时间换钱。</li>
+                    <li class="fragment">自由职业者：时间变灵活了，但本质仍然是"卖时间"。</li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>但问题是：时间其实是不可卖的</h3>
+                <div class="card fragment">
+                    <p><i class="icon fas fa-hourglass-end"></i>时间无法储存：你卖掉一天，就永远少了一天。</p>
+                </div>
+                             <div class="card fragment">
+                    <p><i class="icon fas fa-clone"></i>时间不可复制：你一天只有24小时，哪怕你卖得再贵，也有上限。</p>
+                </div>
+                <div class="card fragment">
+                    <p><i class="icon fas fa-undo"></i>时间消耗不可逆：你在30岁前卖得太便宜，后面想涨价很难。</p>
+                </div>
+                <blockquote class="fragment">
+                    <p>所以，真正值钱的，不是你的时间，而是"时间乘以杠杆"后的复利效应。</p>
+                </blockquote>
+            </section>
+
+            <!-- 穷人与富人的时间差别 -->
+            <section>
+                <h2>2. 穷人与富人，时间的本质差别</h2>
+                <p>时间本身是公平的，每个人每天都只有24小时。那为什么有些人的1小时只值50块，而巴菲特1小时可以值100万？</p>
+                <p class="fragment highlight">区别在于：普通人卖"时间"，富人卖"时间的杠杆"。</p>
+            </section>
+
+            <section>
+                <table class="comparison">
+                    <tr>
+                        <td>时间模式</td>
+                        <td>普通人</td>
+                        <td>富人</td>
+                    </tr>
+                    <tr>
+                        <td>线性时间</td>
+                        <td>按小时/天/月换薪水</td>
+                        <td>按"影响力 × 资产"赚钱</td>
+                    </tr>
+                    <tr>
+                        <td>可替代性</td>
+                        <td>很容易被别人取代</td>
+                        <td>个人品牌、资产唯一</td>
+                    </tr>
+                    <tr>
+                        <td>赚钱方式</td>
+                        <td>亲自工作才有收入</td>
+                        <td>资产、投资、品牌带来收入</td>
+                    </tr>
+                    <tr>
+                        <td>复利效应</td>
+                        <td>停止工作，收入归零</td>
+                        <td>停止工作，钱还在流入</td>
+                    </tr>
+                </table>
+                <p class="fragment">你之所以卖不贵，是因为你的时间太容易被替代，无法积累复利效应。</p>
+            </section>
+
+            <!-- 从卖时间到让时间增值 -->
+            <section>
+                <h2>3. 你如何从"卖时间"转向"让时间增值"</h2>
+                <blockquote>
+                    <p>"你无法卖时间，但你可以卖时间的附加值。"</p>
+                </blockquote>
+            </section>
+
+            <!-- 劳动型到杠杆型 -->
+            <section>
+                <h3>(1) 从"劳动型时间"转向"杠杆型时间"</h3>
+                <p>大部分人穷，不是因为不努力，而是因为他们的时间没有杠杆。</p>
+                <div class="columns">
+                    <div class="column">
+                        <div class="card">
+                            <h3>劳动型时间</h3>
+                            <p>你的收入和时间挂钩，停下来就没钱，比如普通员工、程序员、律师。</p>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="card">
+                            <h3>杠杆型时间</h3>
+                            <p>你的时间能带来持续回报，即使你不再亲自投入，比如写书、开源、投资。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h3>如何建立杠杆？</h3>
+                <div class="card">
+                    <p><i class="icon fas fa-code"></i><strong>技能杠杆：</strong>选择可以"复用"的技能，比如编程、投资、写作，而不是只能换工时的技能。</p>
+                </div>
+                <div class="card">
+                    <p><i class="icon fas fa-users"></i><strong>影响力杠杆：</strong>让你的内容、思想、品牌可以影响更多人，而不是局限于你的工时。</p>
+                </div>
+                <div class="card">
+                    <p><i class="icon fas fa-money-bill-wave"></i><strong>资本杠杆：</strong>让你的钱帮你赚钱，而不是单靠工时换钱。</p>
+                </div>
+            </section>
+
+            <!-- 可替代到不可替代 -->
+            <section>
+                <h3>(2) 从"可替代"转向"不可替代"</h3>
+                <p>你的时间值不值钱，关键在于：市场能不能轻易找到你的替代品？</p>
+                <ul>
+                    <li class="fragment">如果你的技能只是CRUD、低端设计、客服，那你的时间就很廉价。</li>
+                    <li class="fragment">如果你能提供稀缺价值，你的时间就会被市场高价购买。</li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>如何让自己不可替代？</h3>
+                <div class="card">
+                    <p><i class="icon fas fa-gem"></i><strong>做稀缺技能：</strong>选那些供给少、门槛高、需求大的领域，比如AI、投资、商业策略。</p>
+                </div>
+                <div class="card">
+                    <p><i class="icon fas fa-id-badge"></i><strong>建立个人品牌：</strong>写作、开源、分享，让你的名字变成一个品牌，别人想要你，而不是你的时间。</p>
+                </div>
+                <div class="card">
+                    <p><i class="icon fas fa-building"></i><strong>构建长期资产：</strong>开源项目、书籍、线上课程、SaaS产品，让你的价值不断复利。</p>
+                </div>
+            </section>
+
+            <!-- 卖时间到卖系统 -->
+            <section>
+                <h3>(3) 从"卖时间"到"卖系统"</h3>
+                <blockquote>
+                    <p>真正的高手，不是卖自己的时间，而是卖一个可以自动赚钱的"系统"。</p>
+                </blockquote>
+                <ul>
+                    <li class="fragment">马斯克卖的是特斯拉、SpaceX，这些公司一天24小时都在增长他的财富。</li>
+                    <li class="fragment">巴菲特卖的是投资体系，他不需要主动交易，但财富一直复利。</li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>你也可以打造自己的系统</h3>
+                <div class="card">
+                    <p><i class="icon fas fa-globe"></i>一个自动化赚钱的网站、产品、服务。</p>
+                </div>
+                <div class="card">
+                    <p><i class="icon fas fa-book"></i>一套能让你持续积累影响力的内容体系（写作、课程、视频）。</p>
+                </div>
+                <div class="card">
+                    <p><i class="icon fas fa-hand-holding-usd"></i>一组能帮你赚钱的投资组合，让钱替你工作。</p>
+                </div>
+                <p class="fragment highlight">你卖的不是时间，而是"一个可自动增长的系统"。</p>
+            </section>
+
+            <!-- 终极认知 -->
+            <section class="bg-gradient">
+                <h2>4. 终极认知：不卖时间，而是让时间自己生钱</h2>
+                <blockquote>
+                    <p>"你以为你在赚钱，其实你在出卖自己的未来。"</p>
+                </blockquote>
+            </section>
+
+            <section>
+                <div class="columns">
+                    <div class="column">
+                        <div class="card">
+                            <h3>低价卖时间的人</h3>
+                            <p>永远在循环：时间 → 钱 → 生活成本 → 继续卖时间</p>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="card">
+                            <h3>让时间自己赚钱的人</h3>
+                            <p>可以进入：时间 → 资产 → 复利 → 财务自由</p>
+                        </div>
+                    </div>
+                </div>
+                <blockquote class="fragment">
+                    <p>不要想着"如何把时间卖贵"，而是思考"如何让时间本身成为资产"。</p>
+                </blockquote>
+            </section>
+
+            <!-- 结束页 -->
+            <section class="cover">
+                <h2>真正的高手</h2>
+                <p>不是拼命让时间卖更贵，而是建立一种模式，让自己的时间越来越值钱，直到有一天——</p>
+                <h3 class="fragment highlight">你不需要再卖时间了。</h3>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // 初始化RevealJS
+        Reveal.initialize({
+            // 配置项
+            hash: true, // 在URL中显示幻灯片编号
+            history: true, // 启用浏览器历史
+            center: true, // 垂直居中幻灯片
+            transition: 'slide', // 过渡效果：none/fade/slide/convex/concave/zoom
+            // 更多配置...
+            
+            // 插件
+            plugins: []
+        });
+
+        // 初始化Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default'
+        });
+    </script>
+</body>
+</html>

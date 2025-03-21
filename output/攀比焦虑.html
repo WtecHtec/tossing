@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>攀比焦虑：21世纪年轻人的心理困境</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #6366f1;
+            --accent-color: #8b5cf6;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --bg-accent: #eff6ff;
+            --border-color: #e5e7eb;
+            --quote-bg: #f9fafb;
+            --quote-border: #d1d5db;
+        }
+
+        .dark {
+            --primary-color: #60a5fa;
+            --secondary-color: #818cf8;
+            --accent-color: #a78bfa;
+            --text-primary: #f9fafb;
+            --text-secondary: #e5e7eb;
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-accent: #1e3a8a;
+            --border-color: #374151;
+            --quote-bg: #1f2937;
+            --quote-border: #4b5563;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            transition: background-color 0.3s ease;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 600;
+        }
+
+        .title-font {
+            font-family: 'ZCOOL XiaoWei', serif;
+        }
+
+        .prose {
+            max-width: 65ch;
+            line-height: 1.8;
+        }
+
+        .prose p {
+            margin-bottom: 1.5em;
+        }
+
+        .prose h2 {
+            margin-top: 2em;
+            margin-bottom: 1em;
+            font-size: 1.5em;
+        }
+
+        .prose h3 {
+            margin-top: 1.5em;
+            margin-bottom: 0.75em;
+            font-size: 1.25em;
+        }
+
+        .quote-card {
+            background-color: var(--quote-bg);
+            border-left: 4px solid var(--accent-color);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .quote-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .card {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .bullet-point {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .bullet-point:before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0.5rem;
+            width: 0.5rem;
+            height: 0.5rem;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-1px);
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-secondary);
+        }
+
+        /* 进度条样式 */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            z-index: 50;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            width: 0%;
+        }
+
+        /* 动画效果 */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 图表样式 */
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin: 2rem 0;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .prose {
+                padding: 0 1rem;
+            }
+            
+            .quote-card {
+                padding: 1rem;
+                margin: 1.5rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 进度条 -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- 导航栏 -->
+    <nav class="sticky top-0 z-40 bg-opacity-90 backdrop-filter backdrop-blur-lg" style="background-color: var(--bg-primary);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4 md:justify-start md:space-x-10">
+                <div class="flex justify-start lg:w-0 lg:flex-1">
+                    <a href="#" class="text-xl font-bold title-font gradient-text">
+                        攀比焦虑
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="theme-toggle">
+                        <svg id="sunIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <svg id="moonIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- 标题部分 -->
+        <div class="text-center mb-16 fade-in">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 title-font">攀比焦虑</h1>
+            <p class="text-xl md:text-2xl text-center" style="color: var(--text-secondary);">21世纪年轻人的心理困境与解法</p>
+            <div class="w-24 h-1 mx-auto my-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded"></div>
+        </div>
+
+        <!-- 核心观点 -->
+        <div class="quote-card mb-12 fade-in">
+            <p class="text-xl font-medium">一个大多数人没有意识到的深刻真相是："攀比的本质是信息差，焦虑的根源是错把噪音当信号。"</p>
+        </div>
+
+        <!-- 内容部分 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <!-- 左侧内容 -->
+            <div class="md:col-span-2">
+                <article class="prose mx-auto" style="color: var(--text-primary);">
+                    <div class="fade-in">
+                        <p>在21世纪，年轻人的攀比心理和焦虑并不是源于"比不上别人"，而是因为我们获取信息的方式发生了变化——互联网让每个人都能随时看到世界上最优秀、最幸运、最光鲜亮丽的少数人。</p>
+                        
+                        <p>过去，你的对比对象是你的同学、邻居、同事，大家的生活水平相差不大，攀比带来的落差有限。而现在，你的对比对象可能是：</p>
+                        
+                        <ul class="my-6">
+                            <li class="bullet-point">20岁创业成功、年入千万的天才</li>
+                            <li class="bullet-point">颜值逆天、生活精致的网红</li>
+                            <li class="bullet-point">25岁就躺平环游世界的自由职业者</li>
+                            <li class="bullet-point">30岁财富自由、人生开挂的投资大佬</li>
+                        </ul>
+                        
+                        <p>这些人是全球范围内极少数的存在，却因为算法推荐成了你的"同龄人"。你每天刷到的"成功案例"就像是社交媒体构建的一个虚假现实，让你误以为"这才是常态"，从而产生焦虑，觉得自己不够好、不够成功。</p>
+                    </div>
+
+                    <div class="fade-in">
+                        <h2>攀比的本质</h2>
+                        
+                        <p>更深刻的真相是："攀比的本质不是想变得更好，而是害怕自己不够好。"</p>
+                        
+                        <p>大多数人以为，攀比是因为我们渴望进步，想让自己变得更优秀。但实际上，攀比的根源并不是追求更好，而是对"不够好"的恐惧。这种恐惧在21世纪被无限放大，导致年轻人焦虑的本质，不是他们真的想要那些成功，而是害怕自己"没有达到某个社会设定的标准"，害怕掉队，害怕失败，害怕被淘汰。</p>
+                        
+                        <p>但问题是：那个"标准"是虚构的。</p>
+                        
+                                         <ul class="my-6">
+                            <li class="bullet-point">你以为成功要年入百万，但80%的人收入可能都比你低；</li>
+                            <li class="bullet-point">你以为30岁必须买房，但其实没有房子的人也过得挺好；</li>
+                            <li class="bullet-point">你以为"躺平"很可怕，但很多人努力了一辈子也没换来想象中的自由；</li>
+                            <li class="bullet-point">你以为自己落后了，但其实绝大多数人都在普通的轨迹上前进，没有谁真正"赢"过谁。</li>
+                        </ul>
+                    </div>
+
+                    <div class="fade-in">
+                        <div class="card my-8 bg-opacity-50" style="background-color: var(--bg-accent); color: var(--text-primary);">
+                            <h3 class="text-xl font-semibold mb-4">互联网创造的"全球化赛道"</h3>
+                            <p>互联网创造了一个"全球化的赛道"，让每个人都觉得自己随时在竞争。你可能只是一个普通的程序员，但社交媒体推给你的，是比尔·盖茨、扎克伯格的故事；你只是个刚入职场的年轻人，但你每天看到的，是年入百万的同龄人分享职场经验。这会让你误以为，自己本可以"更成功"，只是"还不够努力"，于是陷入无止境的自我怀疑和焦虑。</p>
+                        </div>
+                        
+                        <p>但真正深刻的道理是："你并没有输，因为这根本就不是一场比赛。"</p>
+                        
+                        <ul class="my-6">
+                            <li class="bullet-point">你不需要赢过谁，你只需要活得像自己。</li>
+                            <li class="bullet-point">你不需要符合某个标准，你可以定义自己的标准。</li>
+                            <li class="bullet-point">你不需要用别人的时间线来衡量自己，你有自己的节奏。</li>
+                        </ul>
+                        
+                        <p>如果你能真正理解这一点，焦虑就会慢慢消失。因为你会发现，你一直在追逐的，不是更好的自己，而是一个不存在的"应该"。</p>
+                    </div>
+
+                    <div class="fade-in">
+                        <h2>身份危机：焦虑的深层根源</h2>
+                        
+                        <p>最深刻的真相是：你焦虑的，不是自己比别人差，而是你误以为"自己是谁"是别人定义的。</p>
+                        
+                        <p>攀比是一种身份危机，而不是竞争。21世纪的年轻人越来越焦虑，不是因为他们真的过得不好，而是因为他们的自我认知正在被社交媒体、主流话语、成功学故事不断侵蚀。</p>
+                        
+                        <p>过去，你是谁，取决于你的经历、你的选择、你的内在价值。而现在，你是谁，变成了一个被外界塑造的东西。</p>
+                        
+                        <ul class="my-6">
+                            <li class="bullet-point">你不再觉得自己是"一个喜欢画画的人"，而是"画得不如那些网红画师的人"。</li>
+                            <li class="bullet-point">你不再觉得自己是"一个对科技感兴趣的人"，而是"还没搞个副业月入过万的失败者"。</li>
+                            <li class="bullet-point">你不再觉得自己是"一个努力生活的人"，而是"还没买房的普通打工人"。</li>
+                        </ul>
+                        
+                        <p>你把自己定义的权利，交给了别人设定的标准。你的价值感，来自于你在"社会排行榜"上的位置，而不是来自你自己的内在体验。</p>
+                        
+                        <p>这才是焦虑的根源——你不再觉得自己是一个独特的个体，而是一个被排名、被比较、被评估的数字。你不再活在自己的世界里，而是活在别人的眼光里。</p>
+                    </div>
+
+                    <div class="fade-in">
+                        <h2>真正的解法</h2>
+                        
+                        <div class="quote-card my-8">
+                            <p class="text-lg font-medium">最彻底的解药不是"赢得攀比"，而是退出游戏。</p>
+                            <p>你不是失败者，因为你根本不需要参加这场比赛。没有任何一个真正属于你的身份，是别人可以定义的。</p>
+                        </div>
+                        
+                        <p>你真正的自由，不是赚多少钱、住什么房子，而是你终于不再用外部的标准，来决定你是谁。</p>
+                        
+                        <h3>你从未真正"想要"那些让你焦虑的东西</h3>
+                        
+                        <p>你以为自己想要财富、名声、成功、地位，但如果你静下心来问自己——"为什么？" 你会发现，你想要的不是这些东西本身，而是它们所承载的某种心理暗示：安全感、认可、归属、意义。</p>
+                        
+                        <p>但讽刺的是，这些真正的需求，并不会因为你获得了那些东西而被满足。</p>
+                        
+                        <ul class="my-6">
+                            <li class="bullet-point">你以为赚到一百万就能安心，结果赚到了发现还不够，别人都在谈千万、自由、FIRE。</li>
+                            <li class="bullet-point">你以为变美了就能自信，结果你只是换了一种新的自卑——担心自己衰老、不够独特。</li>
+                            <li class="bullet-point">你以为出人头地了就会被认可，结果发现认可你的人只是羡慕你的成就，而不是你这个人。</li>
+                        </ul>
+                        
+                        <p>你并不是在"追求"这些东西，而是在逃避自己的空虚感。攀比和焦虑，是因为你以为"别人拥有的东西"，能够填补你的缺失。你看着别人的成功，误以为他们过上了"你应该拥有的生活"，于是你开始拼命追逐。</p>
+                        
+                        <p>但真正的深刻之处在于——即使你拿到了，你依然不会满足。</p>
+                        
+                        <p>因为问题从来不是你拥有多少，而是你为何觉得自己"缺少"了什么。</p>
+                    </div>
+
+                    <div class="fade-in">
+                        <h2>终极解法：放弃寻找外部答案</h2>
+                        
+                        <p>你焦虑的本质，是你在用外部的世界，去填补内心的空白。但这个空白，不是靠财富、地位、别人的认可可以填满的。</p>
+                        
+                        <p>你真正需要的，不是赚更多的钱、赢过更多的人，而是去直面那个最根本的问题：</p>
+                        
+                        <div class="quote-card my-8">
+                            <p class="text-lg font-medium">"如果没有这些东西，你仍然愿意好好活着吗？"</p>
+                            <p>如果答案是"是"，那么你已经自由了。</p>
+                        </div>
+                        
+                        <h3>终极的真相</h3>
+                        
+                        <p>终极的真相是：你焦虑的，不是自己不够成功，而是你误以为"存在的价值"必须通过外部证明。</p>
+                        
+                        <p>攀比和焦虑的根源，不是贫穷，不是失败，不是进步太慢，而是一个更本质的幻觉："我的价值，必须由外界认可才能成立。" 这才是现代年轻人痛苦的终极来源。</p>
+                        
+                        <h3>你为什么攀比？</h3>
+                        
+                        <p>因为你把"自己是谁"交给了外部衡量体系——财富、成就、影响力、外貌……你不再相信自己的存在有内在价值，而是等着别人告诉你"你够好了"。</p>
+                        
+                        <p>但问题是：外部的认可永远是不稳定的。</p>
+                        
+                        <ul class="my-6">
+                            <li class="bullet-point">你年入百万，总有人年入千万；</li>
+                            <li class="bullet-point">你变美了，总有人比你更符合主流审美；</li>
+                            <li class="bullet-point">你努力奋斗，总有人比你更快实现财务自由；</li>
+                            <li class="bullet-point">你事业成功了，别人又开始比家庭、比孩子、比人生体验。</li>
+                        </ul>
+                        
+                        <p>如果你的价值感依赖外界，你永远无法获得真正的安宁。</p>
+                    </div>
+
+                    <div class="fade-in">
+                        <h3>焦虑的本质：你不敢"无条件地"承认自己的存在</h3>
+                        
+                        <p>现代社会把人变成了一个"目标机器"，每个人都活在一个默认的前提下："我要足够优秀，才值得被尊重，才值得被爱。"</p>
+                        <p>但这套逻辑有个巨大的漏洞：如果你的价值必须靠外界证明，那意味着你自己从来不曾真正相信它。</p>
+                        
+                        <p>所以，无论你多么成功、多么努力、多么拼命，你还是会焦虑。因为你根本没学会如何在没有外部认可的情况下，依然坚定地认可自己。</p>
+                        
+                        <h3>终极解法：放下"价值证明"，而是直接去体验生命本身</h3>
+                        
+                        <p>你之所以痛苦，是因为你在"追求存在感"，而不是直接存在。你在证明自己值得，而不是直接去活着。</p>
+                        
+                        <p>但现实是——你本来就值得。你存在，就是你的全部理由。</p>
+                        
+                        <p>你不需要年入百万、不需要房子车子、不需要社交媒体上的点赞才能成为一个完整的人。你只需要从"证明"切换到"体验"——不再问"我够不够好"，而是直接去感受"活着的本质"。</p>
+                        
+                        <p>当你真的做到这一点，攀比和焦虑自然消失，因为你已经明白：</p>
+                        
+                        <div class="quote-card my-8">
+                            <p class="text-lg font-medium">"你从未缺少过什么。"</p>
+                        </div>
+                    </div>
+
+                    <div class="fade-in">
+                        <h2>面对虚空：焦虑的终极根源</h2>
+                        
+                        <p>最深刻的真相是：攀比和焦虑的根源，不是外部世界给你的压力，而是你无法独自面对"空无"。</p>
+                        
+                        <h3>你攀比的，不是别人的人生，而是逃避自己的虚空感</h3>
+                        
+                        <p>你以为自己羡慕的是别人的成功、财富、美貌、自由，但其实，你羡慕的只是他们似乎不需要面对"无意义感"。</p>
+                        
+                        <ul class="my-6">
+                            <li class="bullet-point">你看到一个人财务自由，觉得羡慕，其实你羡慕的不是钱，而是他似乎不用再为"活着的意义"发愁。</li>
+                            <li class="bullet-point">你看到一个人事业辉煌，觉得焦虑，其实你焦虑的不是没成功，而是你不知道"如果不去追逐这些目标，自己该做什么"。</li>
+                            <li class="bullet-point">你看到有人环游世界、享受人生，你以为你想要的是旅行，但其实你想要的只是"有一个确定的答案，告诉你人生该怎么过"。</li>
+                        </ul>
+                        
+                        <p>换句话说，你焦虑的不是"自己不够好"，而是你根本不知道"如果不去比较、不去奋斗、不去攀爬，人生的意义是什么"。</p>
+                        
+                        <p>所以，攀比不是贪婪，而是害怕静下来后，发现自己对"为什么活着"毫无答案。</p>
+                        
+                                             <h3>焦虑的根源：你无法直视生命的空无</h3>
+                        
+                        <p>人天生有一个幻觉——以为自己是在"寻找更好的生活"，但实际上，只是在逃避"直面存在的本质"。</p>
+                        
+                        <p>而存在的本质是：它没有意义，除非你自己赋予它意义。</p>
+                        
+                        <p>但这太可怕了。所以，大多数人宁愿用"赚钱""成功""攀比""焦虑"来填充自己的人生，而不愿意停下来问自己："如果这一切都不重要，那什么才重要？"</p>
+                        
+                        <p>而真正的自由，不是赢得比较，而是能够直视这种"空无"，而不感到害怕。</p>
+                        
+                        <h3>终极解法：接受空无，并主动创造意义</h3>
+                        
+                        <p>所有的焦虑，本质上都是在拒绝接受一个事实：世界本没有固定的意义，你必须自己去创造它。</p>
+                        
+                        <p>你之所以攀比，是因为你还在寻找一个"已经存在的正确答案"，希望有一个公认的标准来告诉你"你赢了"或者"你值钱"。但这个答案根本不存在。</p>
+                        
+                        <p>你唯一能做的，是自己决定：什么值得你活着？</p>
+                        
+                        <ul class="my-6">
+                            <li class="bullet-point">也许对你来说，人生的意义就是认真写一段代码，让它变得优雅。</li>
+                            <li class="bullet-point">也许是好好吃一顿饭，感受食物带来的快乐。</li>
+                            <li class="bullet-point">也许是看一朵云的形状，发呆十分钟。</li>
+                        </ul>
+                        
+                        <p>这件事，不需要被认可，不需要比别人更好，也不需要换来任何回报——它依然值得。因为它是你自己赋予的意义，而不是世界强加给你的。</p>
+                        
+                        <p>当你真正接受"人生本没有固定意义"这个事实，你就会发现，焦虑从未真正存在过。</p>
+                    </div>
+                </article>
+            </div>
+            
+            <!-- 右侧边栏 -->
+            <div class="md:col-span-1">
+                <div class="sticky top-24">
+                    <!-- 目录 -->
+                    <div class="card mb-8 fade-in">
+                        <h3 class="text-lg font-semibold mb-4">目录</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="hover:text-blue-500 transition-colors">攀比的本质</a></li>
+                            <li><a href="#" class="hover:text-blue-500 transition-colors">身份危机：焦虑的深层根源</a></li>
+                            <li><a href="#" class="hover:text-blue-500 transition-colors">真正的解法</a></li>
+                            <li><a href="#" class="hover:text-blue-500 transition-colors">终极解法：放弃寻找外部答案</a></li>
+                            <li><a href="#" class="hover:text-blue-500 transition-colors">面对虚空：焦虑的终极根源</a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- 信息图表 -->
+                    <div class="card mb-8 fade-in">
+                        <h3 class="text-lg font-semibold mb-4">攀比焦虑的本质</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <div class="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+                                <span>信息差</span>
+                                <div class="ml-auto">80%</div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-red-500 h-2.5 rounded-full" style="width: 80%"></div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+                                <span>身份危机</span>
+                                <div class="ml-auto">65%</div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-yellow-500 h-2.5 rounded-full" style="width: 65%"></div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                                <span>外部认可依赖</span>
+                                <div class="ml-auto">75%</div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-green-500 h-2.5 rounded-full" style="width: 75%"></div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+                                <span>意义缺失</span>
+                                <div class="ml-auto">70%</div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-blue-500 h-2.5 rounded-full" style="width: 70%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 推荐阅读 -->
+                    <div class="card fade-in">
+                        <h3 class="text-lg font-semibold mb-4">延伸阅读</h3>
+                        <ul class="space-y-3">
+                            <li>
+                                <a href="#" class="flex items-start hover:bg-opacity-50 p-2 rounded transition-colors" style="background-color: var(--bg-secondary);">
+                                    <span class="text-sm">《自卑与超越》- 阿德勒</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex items-start hover:bg-opacity-50 p-2 rounded transition-colors" style="background-color: var(--bg-secondary);">
+                                    <span class="text-sm">《存在主义心理治疗》- 欧文·亚隆</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex items-start hover:bg-opacity-50 p-2 rounded transition-colors" style="background-color: var(--bg-secondary);">
+                                    <span class="text-sm">《人生的智慧》- 叔本华</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex items-start hover:bg-opacity-50 p-2 rounded transition-colors" style="background-color: var(--bg-secondary);">
+                                    <span class="text-sm">《活出生命的意义》- 维克多·弗兰克尔</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex items-start hover:bg-opacity-50 p-2 rounded transition-colors" style="background-color: var(--bg-secondary);">
+                                    <span class="text-sm">《少即是多》- 格雷格·麦基翁</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 可视化图表 -->
+        <div class="my-16 fade-in">
+            <h2 class="text-2xl font-bold mb-8 text-center">攀比焦虑的形成与解决路径</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="card">
+                    <h3 class="text-xl font-semibold mb-4">形成原因</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <span>社交媒体算法放大极端案例</span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <span>将自我价值感外包给他人评价</span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <span>对"不够好"的恐惧</span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <span>逃避面对生命的空无感</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h3 class="text-xl font-semibold mb-4">表现症状</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-center">
+                                                      <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <span>持续性的不满足感</span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <span>自我价值感波动</span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <span>无休止的目标追逐</span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <span>对他人成就的过度关注</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h3 class="text-xl font-semibold mb-4">解决方案</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <span>退出比较游戏，定义自己的标准</span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <span>从"证明"转向"体验"生活</span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <span>接受生命的空无，自己创造意义</span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <span>无条件地承认自己的存在价值</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 进一步阅读 -->
+        <div class="my-16 fade-in">
+            <h2 class="text-2xl font-bold mb-8 text-center">进一步阅读</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                <div class="card hover:shadow-lg transition-shadow">
+                    <div class="aspect-w-2 aspect-h-3 mb-4 bg-gray-100 rounded-lg overflow-hidden">
+                        <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100">
+                            <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold">《自卑与超越》</h3>
+                    <p class="text-sm" style="color: var(--text-secondary);">阿尔弗雷德·阿德勒</p>
+                    <p class="text-xs mt-2" style="color: var(--text-secondary);">探讨如何从自卑感中超越，建立健康的自我价值观</p>
+                </div>
+                
+                <div class="card hover:shadow-lg transition-shadow">
+                    <div class="aspect-w-2 aspect-h-3 mb-4 bg-gray-100 rounded-lg overflow-hidden">
+                        <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-100 to-blue-100">
+                            <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold">《存在主义心理治疗》</h3>
+                    <p class="text-sm" style="color: var(--text-secondary);">欧文·亚隆</p>
+                    <p class="text-xs mt-2" style="color: var(--text-secondary);">关于如何面对生命的四大终极关切：死亡、自由、孤独和无意义</p>
+                </div>
+                
+                <div class="card hover:shadow-lg transition-shadow">
+                    <div class="aspect-w-2 aspect-h-3 mb-4 bg-gray-100 rounded-lg overflow-hidden">
+                        <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-yellow-100 to-red-100">
+                            <svg class="w-12 h-12 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold">《人生的智慧》</h3>
+                    <p class="text-sm" style="color: var(--text-secondary);">叔本华</p>
+                    <p class="text-xs mt-2" style="color: var(--text-secondary);">探讨如何在充满痛苦的世界中获得幸福和满足</p>
+                </div>
+                
+                <div class="card hover:shadow-lg transition-shadow">
+                                       <div class="aspect-w-2 aspect-h-3 mb-4 bg-gray-100 rounded-lg overflow-hidden">
+                        <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-pink-100">
+                            <svg class="w-12 h-12 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold">《活出生命的意义》</h3>
+                    <p class="text-sm" style="color: var(--text-secondary);">维克多·弗兰克尔</p>
+                    <p class="text-xs mt-2" style="color: var(--text-secondary);">从集中营经历中探索如何在极端困境中找到生命的意义</p>
+                </div>
+                
+                <div class="card hover:shadow-lg transition-shadow">
+                    <div class="aspect-w-2 aspect-h-3 mb-4 bg-gray-100 rounded-lg overflow-hidden">
+                        <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-100 to-blue-100">
+                            <svg class="w-12 h-12 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold">《少即是多》</h3>
+                    <p class="text-sm" style="color: var(--text-secondary);">格雷格·麦基翁</p>
+                    <p class="text-xs mt-2" style="color: var(--text-secondary);">关于如何专注于真正重要的事物，摆脱社会期望的束缚</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-opacity-50 py-12" style="background-color: var(--bg-secondary);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <h3 class="text-lg font-semibold mb-2">关于作者</h3>
+                    <p style="color: var(--text-secondary);">思考者 | 写作者 | 心理学爱好者</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="https://github.com/author" class="text-gray-400 hover:text-gray-500">
+                        <span class="sr-only">GitHub</span>
+                        <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path>
+                        </svg>
+                    </a>
+                    <a href="https://twitter.com/author" class="text-gray-400 hover:text-gray-500">
+                        <span class="sr-only">Twitter</span>
+                        <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"></path>
+                        </svg>
+                    </a>
+                    <a href="https://linkedin.com/in/author" class="text-gray-400 hover:text-gray-500">
+                        <span class="sr-only">LinkedIn</span>
+                        <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            <div class="mt-8 border-t border-gray-200 pt-8 md:flex md:items-center md:justify-between">
+                <div class="flex space-x-6 md:order-2">
+                    <a href="#" class="text-sm" style="color: var(--text-secondary);">隐私政策</a>
+                    <a href="#" class="text-sm" style="color: var(--text-secondary);">使用条款</a>
+                </div>
+                <p class="mt-8 text-sm md:mt-0 md:order-1" style="color: var(--text-secondary);">© 2023 攀比焦虑. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // 深色模式切换
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+        
+        // 检查系统偏好
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+            sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            sunIcon.classList.toggle('hidden');
+            moonIcon.classList.toggle('hidden');
+        });
+        
+        // 滚动进度条
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        });
+        
+        // 淡入动画
+        const fadeElements = document.querySelectorAll('.fade-in');
+        
+        const fadeInObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    fadeInObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+        
+        fadeElements.forEach(element => {
+            fadeInObserver.observe(element);
+        });
+    </script>
+</body>
+</html>
